@@ -16,34 +16,32 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 	obj.pursue = function(layer) {
 		var collideLeft = layer.getTiles(obj.x-30, obj.y+60, 32, 48, true);
 		var collideRight = layer.getTiles(obj.x+30, obj.y+60, 32, 48, true);
+    var collideDown = layer.getTiles(obj.x, obj.y+80, 32, 48, true);
 
 		var xDistance = player.x - obj.x;
 		var yDistance = player.y - obj.y;
 
 		if (xDistance < -25 && xDistance > -300) {
-			//if (collideLeft.length == 0){
-			//  obj.collideDown(layer, obj.x-30);
-			//  obj.body.velocity.x = 0;
-			//}
-			//else {
-			//  obj.body.velocity.x = -300;
-			//}
-			obj.body.velocity.x = -300;
+			if (collideLeft.length == 0 && Math.abs(xDistance) > 70 && collideDown.length != 0){
+			  obj.body.velocity.x = 0;
+			}
+			else {
+			  obj.body.velocity.x = -200;
+			}
 		}
 		if (xDistance > 25 && xDistance < 300) {
-			//if (collideRight.length == 0){
-			//  obj.body.velocity.x = 0;
-			//}
-			//else {
-			//  obj.body.velocity.x = 300;
-			//}
-			obj.body.velocity.x = 300;
+			if (collideRight.length == 0 && Math.abs(xDistance) > 70 && collideDown.length != 0){
+			  obj.body.velocity.x = 0;
+			}
+			else {
+			  obj.body.velocity.x = 200;
+			}
 		}
 		if (xDistance < 15 && xDistance > -15){
 			obj.body.velocity.x = 0;
 		}
 
-		if ((player.y < (obj.y-32)) && (Math.abs(xDistance) < 40)){
+		if ((player.y < (obj.y-32)) && (Math.abs(xDistance) < 70)){
 			obj.jump();
 		}
 
@@ -147,7 +145,7 @@ var mainState = {
 
 		//Set some physics on the sprite
 		this.sprite.body.bounce.y = 0.2;
-		this.sprite.body.gravity.y = 2000;
+		this.sprite.body.gravity.y = 1000;
 		this.sprite.body.gravity.x = 20;
 		this.sprite.body.velocity.x = 0;
 
@@ -180,7 +178,7 @@ var mainState = {
 		this.game.physics.arcade.collide(this.sprite, this.boxes, this.destroyBox);
 		//Make the sprite jump when the up key is pushed
     		if(this.cursors.up.isDown && this.sprite.body.blocked.down) {
-      			this.sprite.body.velocity.y = -1000;
+      			this.sprite.body.velocity.y = -650;
     		}
 
 		if(this.cursors.right.isDown) {
