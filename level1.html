@@ -80,6 +80,7 @@ function update() {
 	//Make the sprite collide with the ground layer
 	this.game.physics.arcade.collide(this.sprite, this.groundLayer);
 	this.game.physics.arcade.collide(this.sprite, boxes, destroyBox);
+	this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
 	//Make the sprite jump when the up key is pushed
     if(this.cursors.up.isDown && this.sprite.body.blocked.down) {
       this.sprite.body.velocity.y = -1000;
