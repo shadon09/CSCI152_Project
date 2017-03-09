@@ -16,13 +16,12 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 	obj.pursue = function(layer) {
 		var collideLeft = layer.getTiles(obj.x-30, obj.y+60, 32, 48, true);
 		var collideRight = layer.getTiles(obj.x+30, obj.y+60, 32, 48, true);
-    var collideDown = layer.getTiles(obj.x, obj.y+80, 32, 48, true);
 
 		var xDistance = player.x - obj.x;
 		var yDistance = player.y - obj.y;
 
 		if (xDistance < -25 && xDistance > -300) {
-			if (collideLeft.length == 0 && Math.abs(xDistance) > 70 && collideDown.length != 0){
+			if (collideLeft.length == 0 && Math.abs(xDistance) > 70 && obj.body.blocked.down){
 			  obj.body.velocity.x = 0;
 			}
 			else {
@@ -30,7 +29,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 			}
 		}
 		if (xDistance > 25 && xDistance < 300) {
-			if (collideRight.length == 0 && Math.abs(xDistance) > 70 && collideDown.length != 0){
+			if (collideRight.length == 0 && Math.abs(xDistance) > 70 && obj.body.blocked.down){
 			  obj.body.velocity.x = 0;
 			}
 			else {
@@ -80,7 +79,7 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 		{
 				nextFire = game.time.now + fireRate;
 				var bullet = game.add.sprite(obj.x, obj.y+10, 'bullet', 0, bullets);
-				game.physics.arcade.moveToXY(bullet, player.x, player.y+20, 300);
+				game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
 		}
 	};
 
