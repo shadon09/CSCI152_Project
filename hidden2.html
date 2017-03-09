@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>Hidden area test</title>
+	<script type="text/javascript" src="js/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+function preload() {
+  this.game.load.spritesheet('player', 'assets/dude.png', 32, 48);
+	this.game.load.tilemap('tilemap', 'assets/hidden.json', null, Phaser.Tilemap.TILED_JSON);
+  this.game.load.image('tiles', 'assets/Tiles_64x64.png');
+	this.game.load.image('box', 'assets/tile_06.png');
+}
+
+var ground;
+var secret;
+var due;
+
+function create() {
+	//Start the Arcade Physics systems
+	this.game.physics.startSystem(Phaser.Physics.ARCADE);
+
+	//Change the background colour
+	this.game.stage.backgroundColor = "#a9f0ff";
+
+	//Add the tilemap and tileset image. The first parameter in addTilesetImage
+	//is the name you gave the tilesheet when importing it into Tiled, the second
+	//is the key to the asset in Phaser
+	this.map = this.game.add.tilemap('tilemap');
+	this.map.addTilesetImage('Tiles_64x64', 'tiles');
+
+	//Add both the background and ground layers. We won't be doing anything with the
+	//GroundLayer though
+	this.backgroundlayer = this.map.createLayer('Background');
+	ground = this.map.createLayer('Ground');
+
+	//Before you can use the collide function you need to set what tiles can collide
+	this.map.setCollisionBetween(1, 100, true, 'Ground');
+
+	//Add the sprite to the game and enable arcade physics on it
+	dude = this.game.add.sprite(50, this.game.world.centerY, 'player');
+	this.game.physics.arcade.enable(dude);
+
+  secret = this.map.createLayer('Secret');
+	//Change the world size to match the size of this layer
+	ground.resizeWorld();
+
+	//Set some physics on the sprite
+	dude.body.bounce.y = 0.2;
+	dude.body.gravity.y = 2000;
+	dude.body.gravity.x = 20;
+	dude.body.velocity.x = 0;
+
+	//Create a running animation for the sprite and play it
+	dude.animations.add('right', [5, 6, 7, 8], 10, true);
+	dude.animations.play('right');
+
+	//Make the camera follow the sprite
+	this.game.camera.follow(dude);
+
+	//Enable cursor keys so we can create some controls
+	this.cursors = this.game.input.keyboard.createCursorKeys();
+}
+
+function update() {
+	//Make the sprite collide with the ground layer
+	this.game.physics.arcade.collide(dude, ground);
+
+  if(this.game.physics.arcade.overlap(dude, secret)) {
+    this.map.forEach(secretFound, this, 0, 0, this.map.width, this.map.height, secret);
+  }
+	//Make the sprite jump when the up key is pushed
+    if(this.cursors.up.isDown && dude.body.blocked.down) {
+      dude.body.velocity.y = -1000;
+    }
+
+		if(this.cursors.right.isDown) {
+			dude.body.velocity.x = 250;
+		}
+		else if(this.cursors.left.isDown) {
+			dude.body.velocity.x = -250;
+		}
+		else {
+			dude.body.velocity.x = 0;
+		}
+}
+
+function secretFound(tile) {
+  tile.alpha = .2;
+}
+
+</script>
+
+</body>
+</html>
