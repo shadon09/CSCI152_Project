@@ -1,4 +1,11 @@
 
+var fireRate = 100;
+var nextFire = 0;
+var playerHealth = 100;
+var playerXP = 0;
+var gameXPsteps = 15;
+var playerLevel = 0;
+
 function simpleMeleeEnemy(game, x, y, key, group, player){
 	var obj = game.add.sprite(x, y, key, 0, group);
 	game.physics.arcade.enable(obj);
@@ -97,6 +104,7 @@ var mainState = {
 		this.game.load.spritesheet('simpleShootingEnemy', 'assets/images/ph_char.png');
 		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/images/ph_char.png');
 		this.game.load.spritesheet('bullet', 'assets/images/ph_char.png', 10, 5);
+		this.game.load.image('pbullet', 'assets/bullet43.png');
 	},
 
 
@@ -125,6 +133,15 @@ var mainState = {
 		this.sprite = this.game.add.sprite(50, this.game.world.centerY, 'player');
 		this.sprite.anchor.setTo(.5, 1);
 		this.game.physics.arcade.enable(this.sprite);
+
+
+		this.pbullets = game.add.group();
+		this.pbullets.enableBody = true;
+		this.pbullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+	    	this.pbullets.createMultiple(50, 'pbullet');
+		this.pbullets.setAll('checkWorldBounds', true);
+    		this.pbullets.setAll('outOfBoundsKill', true);
 
 		this.boxes = this.game.add.group();
 		this.boxes.enableBody = true;
@@ -165,6 +182,10 @@ var mainState = {
 	},
 
 	update: function() {
+		
+		if (game.input.activePointer.isDown){
+      			this.fire();
+  		}
 		//Make the sprite collide with the ground layer
 		for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++) {
 			this.game.physics.arcade.collide(this.simpleMeleeEnemies.children[i], this.groundLayer);
@@ -209,6 +230,20 @@ var mainState = {
 		//game.input.onTap.addOnce(function(){
 		//	game.state.start('title');
 		//});
+	},
+
+
+	fire: function(){
+		playerXP+=10;
+    		if (game.time.now > nextFire && this.pbullets.countDead() > 0){
+        		nextFire = game.time.now + fireRate;
+
+        		var pbullet = this.pbullets.getFirstDead();
+
+       			pbullet.reset(this.sprite.x - 8, this.sprite.y - 8);
+
+        		game.physics.arcade.moveToPointer(pbullet, 300);
+    		}
 	},
 
 	gameOver: function(){
