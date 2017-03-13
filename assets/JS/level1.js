@@ -22,42 +22,57 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 		var xDistance = player.x - obj.x;
 		var yDistance = player.y - obj.y;
 
+		// when player is to the left of enemy, and within a certain distance
 		if (xDistance < -25 && xDistance > -300) {
+
+			// if there is a cliff to the left and the player is too far away in the x direction then the enemy won't try and chase
 			if ((collideLeftDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
 			  obj.body.velocity.x = 0;
 			}
 			else {
+				// if the enemy is pursuing and there is an obstacle to the left it will attempt to jump over it
 				if (collideLeft.length != 0) {
 					obj.jump();
 				}
+				// if the player isn't too far away in the y direction and there isn't a cliff to the left of the enemy
 				if (!((collideLeftDown.length == 0) &&  (yDistance < -200))) {
 			  	obj.body.velocity.x = -200;
 				}
+				// the enemy will stop to avoid falling off cliff
 				else {
 					obj.body.velocity.x = 0
 				}
 			}
 		}
+		// when player is to the right of enemy, and within a certain distance
 		if (xDistance > 25 && xDistance < 300) {
+
+			// if there is a cliff to the right and the player is too far away in the x direction then the enemy won't try and chase
 			if ((collideRightDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
 			  obj.body.velocity.x = 0;
 			}
 			else {
+				// if the enemy is pursuing and there is an obstacle to the right it will attempt to jump over it
 				if (collideRight.length != 0) {
 					obj.jump();
 				}
+
+				// if the player isn't too far away in the y direction and there isn't a cliff to the right of the enemy
 				if (!((collideRightDown.length == 0) &&  (yDistance < -200))) {
 			  	obj.body.velocity.x = 200;
 				}
+				// the enemy will stop to avoid falling off cliff
 				else {
 					obj.body.velocity.x = 0
 				}
 			}
 		}
+		// when the enemy gets close enough to player it will stop moving, this would be a good spot to have them attack player
 		if ((xDistance < 15) && (xDistance > -15)){
 			obj.body.velocity.x = 0;
 		}
 
+		// if the player is above enemy and close enough in x and y directions then the enemy will jump 
 		if ((player.y < (obj.y-15)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 200)){
 			obj.jump();
 		}
