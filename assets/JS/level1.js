@@ -14,36 +14,53 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 	}
 
 	obj.pursue = function(layer) {
-		var collideLeft = layer.getTiles(obj.x-30, obj.y+60, 32, 48, true);
-		var collideRight = layer.getTiles(obj.x+30, obj.y+60, 32, 48, true);
+		var collideLeftDown = layer.getTiles(obj.x-30, obj.y+60, 32, 48, true);
+		var collideLeft = layer.getTiles(obj.x-30, obj.y-32, 32, 48, true);
+		var collideRightDown = layer.getTiles(obj.x+30, obj.y+60, 32, 48, true);
+		var collideRight =layer.getTiles(obj.x+30, obj.y-32, 32, 48, true);
 
 		var xDistance = player.x - obj.x;
 		var yDistance = player.y - obj.y;
 
 		if (xDistance < -25 && xDistance > -300) {
-			if (collideLeft.length == 0 && Math.abs(xDistance) > 70 && obj.body.blocked.down){
+			if ((collideLeftDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
 			  obj.body.velocity.x = 0;
 			}
 			else {
-			  obj.body.velocity.x = -200;
+				if (collideLeft.length != 0) {
+					obj.jump();
+				}
+				if (!((collideLeftDown.length == 0) &&  (yDistance < -200))) {
+			  	obj.body.velocity.x = -200;
+				}
+				else {
+					obj.body.velocity.x = 0
+				}
 			}
 		}
 		if (xDistance > 25 && xDistance < 300) {
-			if (collideRight.length == 0 && Math.abs(xDistance) > 70 && obj.body.blocked.down){
+			if ((collideRightDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
 			  obj.body.velocity.x = 0;
 			}
 			else {
-			  obj.body.velocity.x = 200;
+				if (collideRight.length != 0) {
+					obj.jump();
+				}
+				if (!((collideRightDown.length == 0) &&  (yDistance < -200))) {
+			  	obj.body.velocity.x = 200;
+				}
+				else {
+					obj.body.velocity.x = 0
+				}
 			}
 		}
-		if (xDistance < 15 && xDistance > -15){
+		if ((xDistance < 15) && (xDistance > -15)){
 			obj.body.velocity.x = 0;
 		}
 
-		if ((player.y < (obj.y-32)) && (Math.abs(xDistance) < 70)){
+		if ((player.y < (obj.y-15)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 200)){
 			obj.jump();
 		}
-
 	};
 
 	return obj;
