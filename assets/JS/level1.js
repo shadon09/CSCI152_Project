@@ -196,6 +196,7 @@ var mainState = {
 	    this.game.physics.arcade.collide(this.simpleMeleeEnemies.children[i], this.groundLayer);
 	  	this.game.physics.arcade.collide(this.simpleMeleeEnemies.children[i], this.boxes, this.destroyBox);
 	    this.simpleMeleeEnemies.children[i].pursue(this.groundLayer);
+		this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
 	  }
 
 	  for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
