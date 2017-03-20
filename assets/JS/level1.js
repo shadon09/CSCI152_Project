@@ -78,6 +78,9 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 				obj.jump();
 			}
 		}
+		else{
+			obj.body.velocity.x = 0;
+		}
 	};
 
 	return obj;
