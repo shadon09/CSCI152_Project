@@ -14,67 +14,69 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 	}
 
 	obj.pursue = function(layer) {
-		var collideLeftDown = layer.getTiles(obj.x-30, obj.y+60, 32, game.height, true);
-		var collideLeft = layer.getTiles(obj.x-30, obj.y-32, 32, 48, true);
-		var collideRightDown = layer.getTiles(obj.x+30, obj.y+60, 32, game.height, true);
-		var collideRight =layer.getTiles(obj.x+30, obj.y-32, 32, 48, true);
+		if(player.alive){
+			var collideLeftDown = layer.getTiles(obj.x-30, obj.y+60, 32, game.height, true);
+			var collideLeft = layer.getTiles(obj.x-30, obj.y-32, 32, 48, true);
+			var collideRightDown = layer.getTiles(obj.x+30, obj.y+60, 32, game.height, true);
+			var collideRight =layer.getTiles(obj.x+30, obj.y-32, 32, 48, true);
 
-		var xDistance = player.x - obj.x;
-		var yDistance = player.y - obj.y;
+			var xDistance = player.x - obj.x;
+			var yDistance = player.y - obj.y;
 
-		// when player is to the left of enemy, and within a certain distance
-		if (xDistance < -25 && xDistance > -300) {
+			// when player is to the left of enemy, and within a certain distance
+			if (xDistance < -25 && xDistance > -300) {
 
-			// if there is a cliff to the left and the player is too far away in the x direction then the enemy won't try and chase
-			if ((collideLeftDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
-			  obj.body.velocity.x = 0;
-			}
-			else {
-				// if the enemy is pursuing and there is an obstacle to the left it will attempt to jump over it
-				if (collideLeft.length != 0) {
-					obj.jump();
+				// if there is a cliff to the left and the player is too far away in the x direction then the enemy won't try and chase
+				if ((collideLeftDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
+				  obj.body.velocity.x = 0;
 				}
-				// if the player isn't too far away in the y direction and there isn't a cliff to the left of the enemy
-				if (!((collideLeftDown.length == 0) &&  (yDistance < -200))) {
-			  	obj.body.velocity.x = -200;
-				}
-				// the enemy will stop to avoid falling off cliff
 				else {
-					obj.body.velocity.x = 0
+					// if the enemy is pursuing and there is an obstacle to the left it will attempt to jump over it
+					if (collideLeft.length != 0) {
+						obj.jump();
+					}
+					// if the player isn't too far away in the y direction and there isn't a cliff to the left of the enemy
+					if (!((collideLeftDown.length == 0) &&  (yDistance < -200))) {
+				  	obj.body.velocity.x = -200;
+					}
+					// the enemy will stop to avoid falling off cliff
+					else {
+						obj.body.velocity.x = 0
+					}
 				}
 			}
-		}
-		// when player is to the right of enemy, and within a certain distance
-		if (xDistance > 25 && xDistance < 300) {
+			// when player is to the right of enemy, and within a certain distance
+			if (xDistance > 25 && xDistance < 300) {
 
-			// if there is a cliff to the right and the player is too far away in the x direction then the enemy won't try and chase
-			if ((collideRightDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
-			  obj.body.velocity.x = 0;
-			}
-			else {
-				// if the enemy is pursuing and there is an obstacle to the right it will attempt to jump over it
-				if (collideRight.length != 0) {
-					obj.jump();
+				// if there is a cliff to the right and the player is too far away in the x direction then the enemy won't try and chase
+				if ((collideRightDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
+				  obj.body.velocity.x = 0;
 				}
-
-				// if the player isn't too far away in the y direction and there isn't a cliff to the right of the enemy
-				if (!((collideRightDown.length == 0) &&  (yDistance < -200))) {
-			  	obj.body.velocity.x = 200;
-				}
-				// the enemy will stop to avoid falling off cliff
 				else {
-					obj.body.velocity.x = 0
+					// if the enemy is pursuing and there is an obstacle to the right it will attempt to jump over it
+					if (collideRight.length != 0) {
+						obj.jump();
+					}
+
+					// if the player isn't too far away in the y direction and there isn't a cliff to the right of the enemy
+					if (!((collideRightDown.length == 0) &&  (yDistance < -200))) {
+				  	obj.body.velocity.x = 200;
+					}
+					// the enemy will stop to avoid falling off cliff
+					else {
+						obj.body.velocity.x = 0
+					}
 				}
 			}
-		}
-		// when the enemy gets close enough to player it will stop moving, this would be a good spot to have them attack player
-		if ((xDistance < 15) && (xDistance > -15)){
-			obj.body.velocity.x = 0;
-		}
+			// when the enemy gets close enough to player it will stop moving, this would be a good spot to have them attack player
+			if ((xDistance < 15) && (xDistance > -15)){
+				obj.body.velocity.x = 0;
+			}
 
-		// if the player is above enemy and close enough in x and y directions then the enemy will jump
-		if ((player.y < (obj.y-15)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 200)){
-			obj.jump();
+			// if the player is above enemy and close enough in x and y directions then the enemy will jump
+			if ((player.y < (obj.y-15)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 200)){
+				obj.jump();
+			}
 		}
 	};
 
@@ -104,14 +106,16 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 	}
 
 	obj.fire = function() {
-		var xDistance = Math.abs(player.x - obj.x);
-		var yDistance = Math.abs(player.y - obj.y);
+		if(player.alive){
+			var xDistance = Math.abs(player.x - obj.x);
+			var yDistance = Math.abs(player.y - obj.y);
 
-		if (game.time.now > nextFire && xDistance < 500 && yDistance < 500)
-		{
-				nextFire = game.time.now + fireRate;
-				var bullet = game.add.sprite(obj.x, obj.y+10, 'bullet', 0, bullets);
-				game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
+			if (game.time.now > nextFire && xDistance < 500 && yDistance < 500)
+			{
+					nextFire = game.time.now + fireRate;
+					var bullet = game.add.sprite(obj.x, obj.y+10, 'bullet', 0, bullets);
+					game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
+			}
 		}
 	};
 
@@ -232,6 +236,7 @@ var mainState = {
 
 	hitPlayer: function(sprite, bullet) {
 	  bullet.destroy();
+		sprite.kill();
 	}
 }
 
