@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>Level 1</title>
+	<script type="text/javascript" src="js/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render : render });
+
+function preload() {
+  game.load.spritesheet('player', 'assets/dude.png', 32, 48);
+	game.load.tilemap('tilemap', 'assets/level2.json', null, Phaser.Tilemap.TILED_JSON);
+  game.load.image('tiles', 'assets/snow.png');
+	game.load.image('spike', 'assets/spikeTop.png');
+	game.load.image('platform', 'assets/tundraHalfMid.png');
+}
+
+var map
+var spikes
+var character
+var ground
+var background
+var platforms
+var hidden
+
+function create() {
+	//Start the Arcade Physics systems
+	game.physics.startSystem(Phaser.Physics.ARCADE);
+
+
+	//Add the tilemap and tileset image. The first parameter in addTilesetImage
+	//is the name you gave the tilesheet when importing it into Tiled, the second
+	//is the key to the asset in Phaser
+	map = game.add.tilemap('tilemap');
+	map.addTilesetImage('Snow', 'tiles');
+
+	//Add both the background and ground layers. We won't be doing anything with the
+	//GroundLayer though
+	background = map.createLayer('Background');
+	ground = map.createLayer('Ground');
+
+
+	//Before you can use the collide function you need to set what tiles can collide
+	map.setCollisionBetween(1, 100, true, 'Ground');
+
+	//Add the sprite to the game and enable arcade physics on it
+	character = game.add.sprite(50, game.world.centerY, 'player');
+	game.physics.arcade.enable(character);
+	hidden = map.createLayer('Hidden');
+
+	spikes = game.add.group();
+	spikes.enableBody = true;
+	map.createFromObjects('Hazard', 60, 'spike', 0, true, false, spikes);
+	game.physics.arcade.enable(spikes);
+
+	platforms = game.add.group();
+	platforms.enableBody = true;
+	map.createFromObjects("Platform", 24, 'platform', 0, true, false, platforms);
+	game.physics.arcade.enable(platforms);
+	platforms.forEach(function (tile) {tile.body.moves = false}, this, true);
+	//Change the world size to match the size of this layer
+	ground.resizeWorld();
+	map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, map.width, map.height, ground);
+
+	//Set some physics on the sprite
+	character.body.bounce.y = 0.2;
+	character.body.gravity.y = 1000;
+	character.body.gravity.x = 20;
+	character.body.velocity.x = 0;
+
+	//Create a running animation for the sprite and play it
+	character.animations.add('right', [5, 6, 7, 8], 10, true);
+	character.animations.play('right');
+
+	//Make the camera follow the sprite
+	game.camera.follow(character);
+	//Enable cursor keys so we can create some controls
+	this.cursors = game.input.keyboard.createCursorKeys();
+}
+
+function update() {
+	//Make the sprite collide with the ground layer
+	game.physics.arcade.collide(character, ground);
+	game.physics.arcade.collide(character, platforms, platFallDelay);
+	game.physics.arcade.overlap(character, hidden, showHidden);
+	//game.physics.arcade.collide(character, boxes, destroyBox);
+  spikes.forEach(spikeFall, this, true);
+
+	//Make the sprite jump when the up key is pushed
+    if(this.cursors.up.isDown && (character.body.blocked.down)) {
+      character.body.velocity.y = -700;
+    }
+
+		if(this.cursors.right.isDown) {
+			character.body.velocity.x = 250;
+		}
+		else if(this.cursors.left.isDown && (character.x > 5820 || character.x < 5790)) {
+			character.body.velocity.x = -250;
+		}
+		else {
+			character.body.velocity.x = 0;
+		}
+
+		// Entering boss area
+		if(character.x > 5790) {
+			game.camera.unfollow();
+			game.camera.setPosition(5820, 500);
+		}
+
+		// Falls in pit
+		if(character.y > 1000) {
+			character.kill();
+
+		}
+}
+
+function destroyBox(sprite, box) {
+	box.destroy();
+}
+
+function spikeFall(trap) {
+	if (character.x >= trap.x)
+		trap.body.gravity.y = 5000;
+}
+
+function platFallDelay(player, plat) {
+	game.time.events.add(Phaser.Timer.SECOND * 4, platFall, this, plat);
+}
+
+function platFall(plat) {
+	plat.body.moves = true;
+	//plat.body.gravity.y = 950;
+}
+
+function showHidden(player, tile)
+{
+	tile.alpha = .75;
+}
+
+function render () {
+	var zone = game.camera.deadzone;
+
+    game.debug.cameraInfo(game.camera, 64, 64);
+    game.debug.spriteCoords(character, 64, 320);
+		game.debug.text("Time until event: " + game.time.events.duration, 128, 32);
+}
+</script>
+
+</body>
+</html>
