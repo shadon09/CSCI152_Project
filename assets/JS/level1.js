@@ -14,9 +14,9 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 	}
 
 	obj.pursue = function(layer) {
-		var collideLeftDown = layer.getTiles(obj.x-30, obj.y+60, 32, 48, true);
+		var collideLeftDown = layer.getTiles(obj.x-30, obj.y+60, 32, game.height, true);
 		var collideLeft = layer.getTiles(obj.x-30, obj.y-32, 32, 48, true);
-		var collideRightDown = layer.getTiles(obj.x+30, obj.y+60, 32, 48, true);
+		var collideRightDown = layer.getTiles(obj.x+30, obj.y+60, 32, game.height, true);
 		var collideRight =layer.getTiles(obj.x+30, obj.y-32, 32, 48, true);
 
 		var xDistance = player.x - obj.x;
@@ -72,7 +72,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 			obj.body.velocity.x = 0;
 		}
 
-		// if the player is above enemy and close enough in x and y directions then the enemy will jump 
+		// if the player is above enemy and close enough in x and y directions then the enemy will jump
 		if ((player.y < (obj.y-15)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 200)){
 			obj.jump();
 		}
@@ -196,13 +196,14 @@ var mainState = {
 	    this.game.physics.arcade.collide(this.simpleMeleeEnemies.children[i], this.groundLayer);
 	  	this.game.physics.arcade.collide(this.simpleMeleeEnemies.children[i], this.boxes, this.destroyBox);
 	    this.simpleMeleeEnemies.children[i].pursue(this.groundLayer);
+		this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
 	  }
 
 	  for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
 	    this.game.physics.arcade.collide(this.simpleShootingEnemies.children[i], this.groundLayer);
 	  	this.game.physics.arcade.collide(this.simpleShootingEnemies.children[i], this.boxes, this.destroyBox);
 	    this.simpleShootingEnemies.children[i].fire();
-	    this.game.physics.arcade.collide(this.sprite, this.simpleShootingEnemies.children[i].getBullets(), this.hitPlayer);
+	    this.game.physics.arcade.overlap(this.sprite, this.simpleShootingEnemies.children[i].getBullets(), this.hitPlayer);
 	  }
 		//Make the sprite collide with the ground layer
 		this.game.physics.arcade.collide(this.sprite, this.groundLayer);
