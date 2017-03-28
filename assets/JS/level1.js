@@ -6,6 +6,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 	obj.body.gravity.y = 1000;
 	obj.body.gravity.x = 0;
 	obj.body.velocity.x = 0;
+	obj.anchor.setTo(.5, .5);
 
 	obj.jump = function() {
 		if (obj.body.blocked.down) {
@@ -38,6 +39,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 					// if the player isn't too far away in the y direction and there isn't a cliff to the left of the enemy
 					if (!((collideLeftDown.length == 0) &&  (yDistance < -200))) {
 				  	obj.body.velocity.x = -200;
+						obj.scale.setTo(-1, 1);
 					}
 					// the enemy will stop to avoid falling off cliff
 					else {
@@ -61,6 +63,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 					// if the player isn't too far away in the y direction and there isn't a cliff to the right of the enemy
 					if (!((collideRightDown.length == 0) &&  (yDistance < -200))) {
 				  	obj.body.velocity.x = 200;
+						obj.scale.setTo(1, 1);
 					}
 					// the enemy will stop to avoid falling off cliff
 					else {
@@ -77,6 +80,9 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 			if ((player.y < (obj.y-15)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 200)){
 				obj.jump();
 			}
+		}
+		else{
+			obj.body.velocity.x = 0;
 		}
 	};
 
