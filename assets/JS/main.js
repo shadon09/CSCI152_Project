@@ -179,6 +179,7 @@ var mainState = {
 
 		//Enable cursor keys so we can create some controls
 		this.cursors = this.game.input.keyboard.createCursorKeys();
+
 	},
 
 	update: function() {
@@ -223,14 +224,6 @@ var mainState = {
 		box.destroy();
 	},
 	
-	hitPlayer: function(sprite, bullet) {
-		bullet.destroy();
-		//sprite.destroy();
-		//this.loseLabel.visible = true;
-		//game.input.onTap.addOnce(function(){
-		//	game.state.start('title');
-		//});
-	},
 
 
 	fire: function(){
@@ -252,8 +245,15 @@ var mainState = {
 		game.input.onTap.addOnce(function(){
 			game.state.start('title');
 		});
-	}
+	},
 
+	hitPlayer: function(sprite, bullet) {
+	  	bullet.destroy();
+		sprite.kill();
+		game.input.onTap.addOnce(function(){
+			game.state.start('title');
+		})
+	}
 }
 
 
@@ -290,7 +290,7 @@ var titleState = {
 }
 
 //Create a new game, set the value inside the game variable
-var game = new Phaser.Game(800,600);
+game = new Phaser.Game(800,600);
 //Add the mainState
 game.state.add('main', mainState);
 //Add the titleState
