@@ -147,7 +147,8 @@ var mainState = {
 		this.boxes.enableBody = true;
 		this.boxes.setAll('immovable',true);
 		this.boxes.setAll('body.moves', false);
-
+		
+		this.hidden = this.map.createLayer('Hidden');
 
 		this.simpleMeleeEnemies = this.game.add.group();
 		this.simpleShootingEnemies = this.game.add.group();
@@ -202,6 +203,8 @@ var mainState = {
 	  	}
 		this.game.physics.arcade.collide(this.sprite, this.groundLayer);
 		this.game.physics.arcade.collide(this.sprite, this.boxes, this.destroyBox);
+		this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
+		this.game.physics.arcade.overlap(this.sprite, this.hidden, this.showHidden);
 		//Make the sprite jump when the up key is pushed
     		if(this.cursors.up.isDown && this.sprite.body.blocked.down) {
       			this.sprite.body.velocity.y = -1000;
@@ -218,13 +221,22 @@ var mainState = {
 		else {
 			this.sprite.body.velocity.x = 0;
 		}
+		
+		// Falls in pit
+		if(this.sprite.y > 1000) {
+			this.sprite.kill();
+			game.state.start('levelSelect');
+		}
 	},
 
 	destroyBox: function(sprite, box) {
 		box.destroy();
 	},
 	
-
+	showHidden: function(player, tile)
+	{
+		tile.alpha = .75;
+	},
 
 	fire: function(){
 		playerXP+=10;
@@ -289,11 +301,56 @@ var titleState = {
 	},
 }
 
+var levMenuState = {
+	preload: function(){
+			this.game.load.spritesheet('button', 'assets/images/number-buttons-90x90.png', 90, 90);
+		//Set the background Color
+		game.stage.backgroundColor = '#ffffff';
+
+	},
+
+	create: function(){
+		game.camera.focusOnXY(game.world.centerX, game.world.centerY);
+		//Add text with value set to "Platformer"
+		this.labelTitle = game.add.text(game.world.centerX, game.world.centerY-200, "Level Select", {font: '50px Arial', fill: '#000000'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Add text with value set to "Play"
+		this.labelNext = game.add.text(game.world.centerX, game.world.centerY, "Next Level", {font: '30px Arial', fill: '#000000'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Allow for the "Play" text to be clicked on
+		this.labelTitle.inputEnabled = true;
+		 this.button = game.add.button(game.world.centerX - 195, game.world.centerY - 50, 'button', function() {game.state.start('main')}, this, 0, 0, 0);
+		 this.button.anchor.setTo(0.5, 0.5);
+		 this.button2 = game.add.button(game.world.centerX - 95, game.world.centerY - 50, 'button', function() {game.state.start('level2')}, this, 1, 1, 1);
+		 this.button2.anchor.setTo(0.5, 0.5);
+
+		//If "Play" is clicked on, then start "mainState"
+		this.labelTitle.events.onInputDown.add(function(){
+			game.state.start('main');
+		}, this);
+		//If spacebar is pushed, start mainState
+		var spaceKey = game.input.keyboard.addKey(
+			Phaser.Keyboard.SPACEBAR);
+		spaceKey.onDown.add(function(){
+			game.state.start('main');
+		}, this);
+	},
+
+	update: function(){
+
+	},
+}
+
+
 //Create a new game, set the value inside the game variable
 game = new Phaser.Game(800,600);
 //Add the mainState
 game.state.add('main', mainState);
 //Add the titleState
 game.state.add('title', titleState);
+//Add the Level select state
+game.state.add('level2', level2);
+game.state.add('levelSelect', levMenuState);
+
 //Start the game with the titleState
 game.state.start('title');
