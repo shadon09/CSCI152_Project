@@ -279,7 +279,7 @@ var level2 = {
 
 	create: function() {
 		//Start the Arcade Physics systems
-		this.game.physics.startSystem(Phaser.Physics.ARCADE);
+		game.physics.startSystem(Phaser.Physics.ARCADE);
 
 
 		//Add the tilemap and tileset image. The first parameter in addTilesetImage
@@ -290,13 +290,13 @@ var level2 = {
 
 		//Add both the background and ground layers. We won't be doing anything with the
 		//GroundLayer though
-		this.background = map.createLayer('Background');
-		this.ground = map.createLayer('Ground');
+		this.background = this.map.createLayer('Background');
+		this.ground = this.map.createLayer('Ground');
 
 		//Before you can use the collide function you need to set what tiles can collide
 		this.map.setCollisionBetween(1, 100, true, 'Ground');
 
-		this.platforms = game.add.group();
+		this.platforms = this.game.add.group();
 		this.platforms.enableBody = true;
 		this.map.createFromObjects('Falling Platforms', 13, 'platform', 0, true, false, platforms);
 
@@ -331,7 +331,7 @@ var level2 = {
 		this.character.animations.play('right');
 
 		//Make the camera follow the sprite
-		this.game.camera.follow(character);
+		this.game.camera.follow(this.character);
 		//Enable cursor keys so we can create some controls
 		this.cursors = game.input.keyboard.createCursorKeys();
 	},
