@@ -268,6 +268,146 @@ var mainState = {
 	}
 }
 
+var level2 = {
+	preload: function() {
+	  this.game.load.spritesheet('player', 'assets/dude.png', 32, 48);
+		this.game.load.tilemap('tilemap', 'assets/level2.json', null, Phaser.Tilemap.TILED_JSON);
+	  this.game.load.image('tiles', 'assets/snow.png');
+		this.game.load.image('spike', 'assets/spikeTop.png');
+		this.game.load.image('platform', 'assets/tundraHalfMid.png');
+	},
+
+	create: function() {
+		//Start the Arcade Physics systems
+		this.game.physics.startSystem(Phaser.Physics.ARCADE);
+
+
+		//Add the tilemap and tileset image. The first parameter in addTilesetImage
+		//is the name you gave the tilesheet when importing it into Tiled, the second
+		//is the key to the asset in Phaser
+		this.map = game.add.tilemap('tilemap');
+		this.map.addTilesetImage('Snow', 'tiles');
+
+		//Add both the background and ground layers. We won't be doing anything with the
+		//GroundLayer though
+		this.background = map.createLayer('Background');
+		this.ground = map.createLayer('Ground');
+
+		//Before you can use the collide function you need to set what tiles can collide
+		this.map.setCollisionBetween(1, 100, true, 'Ground');
+
+		this.platforms = game.add.group();
+		this.platforms.enableBody = true;
+		this.map.createFromObjects('Falling Platforms', 13, 'platform', 0, true, false, platforms);
+
+		this.platforms.forEach(function(p) {
+			this.physics.enable(p, Phaser.Physics.ARCADE);
+			p.body.allowGravity = false;
+      p.body.immovable = true;
+		}, this);
+
+		//Add the sprite to the game and enable arcade physics on it
+		this.character = game.add.sprite(50, game.world.centerY, 'player');
+		game.physics.arcade.enable(character);
+		this.hidden = map.createLayer('Hidden');
+
+		this.spikes = game.add.group();
+		this.spikes.enableBody = true;
+		this.map.createFromObjects('Hazard', 60, 'spike', 0, true, false, spikes);
+		this.game.physics.arcade.enable(spikes);
+
+		//Change the world size to match the size of this layer
+		this.ground.resizeWorld();
+		this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.ground);
+
+		//Set some physics on the sprite
+		this.character.body.bounce.y = 0.2;
+		this.character.body.gravity.y = 1200;
+		this.character.body.gravity.x = 20;
+		this.character.body.velocity.x = 0;
+
+		//Create a running animation for the sprite and play it
+		this.character.animations.add('right', [5, 6, 7, 8], 10, true);
+		this.character.animations.play('right');
+
+		//Make the camera follow the sprite
+		this.game.camera.follow(character);
+		//Enable cursor keys so we can create some controls
+		this.cursors = game.input.keyboard.createCursorKeys();
+	},
+
+	update: function() {
+		//Make the sprite collide with the ground layer
+		this.game.physics.arcade.collide(this.character, this.ground);
+		this.game.physics.arcade.collide(this.character, this.platforms, this.platFallDelay, null, this);
+		this.game.physics.arcade.overlap(this.character, this.hidden, this.showHidden);
+		//game.physics.arcade.collide(character, boxes, destroyBox);
+	  this.spikes.forEach(this.spikeFall, this, true);
+
+		//Make the sprite jump when the up key is pushed
+	    if(this.cursors.up.isDown && (this.character.body.onFloor())) {
+	      this.character.body.velocity.y = -800;
+	    }
+
+			if(this.cursors.right.isDown) {
+				this.character.body.velocity.x = 250;
+			}
+			else if(this.cursors.left.isDown && (this.character.x > 5820 || this.character.x < 5790)) {
+				this.character.body.velocity.x = -250;
+			}
+			else {
+				this.character.body.velocity.x = 0;
+			}
+
+			// Entering boss area
+			if(this.character.x > 5790) {
+				this.game.camera.unfollow();
+				this.game.camera.setPosition(5820, 500);
+			}
+
+			// Falls in pit
+			if(this.character.y > 1000) {
+				this.character.kill();
+
+			}
+	},
+
+	destroyBox: function(sprite, box) {
+		box.destroy();
+	},
+
+	spikeFall: function(trap) {
+		if (this.character.x >= trap.x)
+			trap.body.gravity.y = 5000;
+	},
+
+	platFallDelay: function(player, plat) {
+		this.game.time.events.add(Phaser.Timer.SECOND, this.platFall, this, plat);
+	},
+
+	platFall: function(plat) {
+		var t = this.game.add.tween(plat);
+    var dist = ((this.game.world.height + 100) - plat.y);
+    var time = dist * 2.25;
+    t.to( { y: plat.y + dist }, time, Phaser.Easing.Quadratic.In, false, 0, 0, false);
+		t.start();
+		plat.y = plat.y+100;
+
+	},
+
+	showHidden: function(player, tile)
+	{
+		tile.alpha = .75;
+	},
+
+	render: function() {
+		var zone = this.game.camera.deadzone;
+
+	    this.game.debug.cameraInfo(this.game.camera, 64, 64);
+	    this.game.debug.spriteCoords(character, 64, 320);
+			this.game.debug.text("Time until event: " + game.time.events.duration, 128, 32);
+	}
+}
 
 var titleState = {
 	preload: function(){
