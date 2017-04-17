@@ -147,7 +147,7 @@ var mainState = {
 		this.boxes.enableBody = true;
 		this.boxes.setAll('immovable',true);
 		this.boxes.setAll('body.moves', false);
-		
+
 		this.hidden = this.map.createLayer('Hidden');
 
 		this.simpleMeleeEnemies = this.game.add.group();
@@ -156,11 +156,11 @@ var mainState = {
 		simpleShootingEnemy(this.game, 400, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
 		simpleShootingEnemy(this.game, 700, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
 		simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
-		
+
 		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
 		this.loseLabel.anchor.setTo(0.5, 0.5);
 		this.loseLabel.visible = false;
-		
+
 		this.map.createFromObjects('Object Layer 1', 7, 'box', 0, true, false, this.boxes);
 		//Change the world size to match the size of this layer
 		this.groundLayer.resizeWorld();
@@ -184,7 +184,7 @@ var mainState = {
 	},
 
 	update: function() {
-		
+
 		if (game.input.activePointer.isDown){
       			this.fire();
   		}
@@ -209,7 +209,7 @@ var mainState = {
     		if(this.cursors.up.isDown && this.sprite.body.blocked.down) {
       			this.sprite.body.velocity.y = -1000;
     		}
-	
+
 		if(this.cursors.right.isDown) {
 			this.sprite.body.velocity.x = 250;
 			this.sprite.scale.setTo(1, 1);
@@ -221,7 +221,7 @@ var mainState = {
 		else {
 			this.sprite.body.velocity.x = 0;
 		}
-		
+
 		// Falls in pit
 		if(this.sprite.y > 1000) {
 			this.sprite.kill();
@@ -232,7 +232,7 @@ var mainState = {
 	destroyBox: function(sprite, box) {
 		box.destroy();
 	},
-	
+
 	showHidden: function(player, tile)
 	{
 		tile.alpha = .75;
@@ -255,16 +255,16 @@ var mainState = {
 		this.sprite.destroy();
 		this.loseLabel.visible = true;
 		game.input.onTap.addOnce(function(){
-			game.state.start('title');
+			game.state.start('levelSelect');
 		});
 	},
 
 	hitPlayer: function(sprite, bullet) {
 	  	bullet.destroy();
-		sprite.kill();
-		game.input.onTap.addOnce(function(){
+		//sprite.kill();
+		/*game.input.onTap.addOnce(function(){
 			game.state.start('title');
-		})
+		})*/
 	}
 }
 
@@ -307,9 +307,9 @@ var level2 = {
 		}, this);
 
 		//Add the sprite to the game and enable arcade physics on it
-		this.character = game.add.sprite(50, game.world.centerY, 'player');
+		this.character = game.add.sprite(50, game.world.centerY - 150, 'player');
 		game.physics.arcade.enable(this.character);
-		this.hidden = map.createLayer('Hidden');
+		this.hidden = this.map.createLayer('Hidden');
 
 		this.spikes = game.add.group();
 		this.spikes.enableBody = true;
@@ -359,15 +359,11 @@ var level2 = {
 				this.character.body.velocity.x = 0;
 			}
 
-			// Entering boss area
-			if(this.character.x > 5790) {
-				this.game.camera.unfollow();
-				this.game.camera.setPosition(5820, 500);
-			}
 
 			// Falls in pit
 			if(this.character.y > 1000) {
 				this.character.kill();
+				game.state.start('levelSelect');
 
 			}
 	},
