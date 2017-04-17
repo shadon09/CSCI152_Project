@@ -298,7 +298,7 @@ var level2 = {
 
 		this.platforms = this.game.add.group();
 		this.platforms.enableBody = true;
-		this.map.createFromObjects('Falling Platforms', 13, 'platform', 0, true, false, platforms);
+		this.map.createFromObjects('Falling Platforms', 13, 'platform', 0, true, false, this.platforms);
 
 		this.platforms.forEach(function(p) {
 			this.physics.enable(p, Phaser.Physics.ARCADE);
@@ -308,13 +308,13 @@ var level2 = {
 
 		//Add the sprite to the game and enable arcade physics on it
 		this.character = game.add.sprite(50, game.world.centerY, 'player');
-		game.physics.arcade.enable(character);
+		game.physics.arcade.enable(this.character);
 		this.hidden = map.createLayer('Hidden');
 
 		this.spikes = game.add.group();
 		this.spikes.enableBody = true;
-		this.map.createFromObjects('Hazard', 60, 'spike', 0, true, false, spikes);
-		this.game.physics.arcade.enable(spikes);
+		this.map.createFromObjects('Hazard', 60, 'spike', 0, true, false, this.spikes);
+		this.game.physics.arcade.enable(this.spikes);
 
 		//Change the world size to match the size of this layer
 		this.ground.resizeWorld();
@@ -404,7 +404,7 @@ var level2 = {
 		var zone = this.game.camera.deadzone;
 
 	    this.game.debug.cameraInfo(this.game.camera, 64, 64);
-	    this.game.debug.spriteCoords(character, 64, 320);
+	    this.game.debug.spriteCoords(this.character, 64, 320);
 			this.game.debug.text("Time until event: " + game.time.events.duration, 128, 32);
 	}
 }
