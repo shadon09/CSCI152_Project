@@ -114,7 +114,7 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 	game.physics.arcade.enable(obj);
 
 	obj.body.bounce.y = 0.2;
-	obj.body.gravity.y = 1000;
+	obj.body.gravity.y = 200;
 	obj.body.gravity.x = 0;
 	obj.body.velocity.x = 0;
 
@@ -166,13 +166,14 @@ function firstBoss(game, x, y, key, group, player){
 	obj.anchor.setTo(.5, .5);
 
 	obj.chargeAttack = function(){
-		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 600);
+		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 1000);
 	}
 
 	obj.dropAttack = function (){
 		obj.x = player.x;
 		obj.y = player.y - 200;
 		obj.body.velocity.x = 0;
+		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 600);
 	}
 
 	obj.fight = function (){
