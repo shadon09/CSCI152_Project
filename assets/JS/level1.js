@@ -173,7 +173,7 @@ function firstBoss(game, x, y, key, group, player){
 		obj.x = player.x;
 		obj.y = player.y - 200;
 		obj.body.velocity.x = 0;
-		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 600);
+		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 500);
 	}
 
 	obj.fight = function (){
