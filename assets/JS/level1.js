@@ -1,14 +1,22 @@
+var fireRate = 100;
+var nextFire = 0;
+var playerHealth = 100;
+var playerXP = 0;
+var gameXPsteps = 15;
+var playerLevel = 0;
+
 //Put the entire state into a variable
 var mainState = {
 	preload: function(){
-  		this.game.load.image('player', 'assets/images/ph_char.png');
-			this.game.load.tilemap('tilemap', 'assets/level1.json', null, Phaser.Tilemap.TILED_JSON);
- 	 		this.game.load.image('tiles', 'assets/images/Tiles_64x64.png');
-			this.game.load.image('box', 'assets/images/tile_06.png');
-			this.game.load.spritesheet('simpleShootingEnemy', 'assets/images/ph_char.png');
-		  this.game.load.spritesheet('simpleMeleeEnemy', 'assets/images/ph_char.png');
-			this.game.load.spritesheet('firstBoss', 'assets/images/ph_char.png');
-			this.game.load.spritesheet('bullet', 'assets/images/ph_char.png', 10, 5);
+		this.game.load.image('player', 'assets/images/ph_char.png');
+		this.game.load.tilemap('tilemap', 'assets/level1.json', null, Phaser.Tilemap.TILED_JSON);
+		this.game.load.image('tiles', 'assets/images/sheet.png');
+		this.game.load.image('box', 'assets/images/crate.png');
+		this.game.load.spritesheet('simpleShootingEnemy', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('firstBoss', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('bullet', 'assets/bullet43.png');
+		this.game.load.image('pbullet', 'assets/bullet43.png');
 	},
 
 	create: function(){
@@ -16,13 +24,13 @@ var mainState = {
 		this.game.physics.startSystem(Phaser.Physics.ARCADE);
 
 		//Change the background colour
-		this.game.stage.backgroundColor = "#a9f0ff";
+		this.game.stage.backgroundColor = "#170e7f";
 
 		//Add the tilemap and tileset image. The first parameter in addTilesetImage
 		//is the name you gave the tilesheet when importing it into Tiled, the second
 		//is the key to the asset in Phaser
 		this.map = this.game.add.tilemap('tilemap');
-		this.map.addTilesetImage('Tiles_64x64', 'tiles');
+		this.map.addTilesetImage('factory', 'tiles');
 
 		//Add both the background and ground layers. We won't be doing anything with the
 		//GroundLayer though
@@ -33,25 +41,37 @@ var mainState = {
 		this.map.setCollisionBetween(1, 100, true, 'Ground');
 
 		//Add the sprite to the game and enable arcade physics on it
-		this.sprite = this.game.add.sprite(500, this.game.world.centerY, 'player');
+		this.sprite = this.game.add.sprite(50, this.game.world.centerY, 'player');
 		this.sprite.anchor.setTo(.5, 1);
 		this.game.physics.arcade.enable(this.sprite);
+
+		this.pbullets = game.add.group();
+		this.pbullets.enableBody = true;
+		this.pbullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+	  this.pbullets.createMultiple(50, 'pbullet');
+		this.pbullets.setAll('checkWorldBounds', true);
+    this.pbullets.setAll('outOfBoundsKill', true);
+		this.hidden = this.map.createLayer('Hidden');
 
 		this.simpleMeleeEnemies = this.game.add.group();
 		this.simpleShootingEnemies = this.game.add.group();
 		this.firstBoss = this.game.add.group();
 
-		simpleMeleeEnemy(this.game, 300, 300, 'simpleMeleeEnemy', this.simpleMeleeEnemies, this.sprite);
-	  simpleShootingEnemy(this.game, 400, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
-	  simpleShootingEnemy(this.game, 700, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
-	  simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
-		firstBoss(this.game, 12700, 68, 'firstBoss', this.firstBoss, this.sprite);
-
-
 		this.boxes = this.game.add.group();
 		this.boxes.enableBody = true;
 		this.boxes.setAll('immovable',true);
 		this.boxes.setAll('body.moves', false);
+
+		simpleMeleeEnemy(this.game, 300, 300, 'simpleMeleeEnemy', this.simpleMeleeEnemies, this.sprite);
+	  simpleShootingEnemy(this.game, 400, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
+	  simpleShootingEnemy(this.game, 700, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
+	  simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
+		firstBoss(this.game, 13700, 68, 'firstBoss', this.firstBoss, this.sprite);
+
+		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
+		this.loseLabel.anchor.setTo(0.5, 0.5);
+		this.loseLabel.visible = false;
 
 		this.map.createFromObjects('Object Layer 1', 7, 'box', 0, true, false, this.boxes);
 		//Change the world size to match the size of this layer
@@ -75,21 +95,31 @@ var mainState = {
 	},
 
 	update: function() {
+
+		if (game.input.activePointer.isDown){
+      			this.fire();
+  	}
+
 		for (var i = 0; i < this.firstBoss.children.length; i++) {
-			this.firstBoss.children[i].update(this, this.destroyBox, this.bossHitPlayer);
+			this.firstBoss.children[i].update(this.groundLayer, this.destroyBox, this.bossHitPlayer);
+			this.game.physics.arcade.overlap(this.firstBoss.children[i], this.pbullets, this.enemyHit);
 		}
 
 		for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++) {
-	    this.simpleMeleeEnemies.children[i].update(this, this.destroyBox);
-			this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
+	    this.simpleMeleeEnemies.children[i].update(this.groundLayer, this.destroyBox);
+			this.game.physics.arcade.overlap(this.simpleMeleeEnemies.children[i], this.pbullets, this.enemyHit);
 	  }
 
 	  for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
-	    this.simpleShootingEnemies.children[i].update(this, this.destroyBox, this.hitPlayer);
+	    this.simpleShootingEnemies.children[i].update(this.groundLayer, this.destroyBox, this.playerHit);
+			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i], this.pbullets, this.enemyHit);
 	  }
 		//Make the sprite collide with the ground layer
 		this.game.physics.arcade.collide(this.sprite, this.groundLayer);
 		this.game.physics.arcade.collide(this.sprite, this.boxes, this.destroyBox);
+		this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
+		this.game.physics.arcade.overlap(this.sprite, this.hidden, this.showHidden);
+
 		//Make the sprite jump when the up key is pushed
     		if(this.cursors.up.isDown && this.sprite.body.blocked.down) {
       			this.sprite.body.velocity.y = -650;
@@ -106,15 +136,55 @@ var mainState = {
 		else {
 			this.sprite.body.velocity.x = 0;
 		}
+
+		// Falls in pit
+		if(this.sprite.y > 1000) {
+			this.sprite.kill();
+			game.state.start('levelSelect');
+		}
 	},
 
 	destroyBox: function(sprite, box) {
 		box.destroy();
 	},
 
-	hitPlayer: function(sprite, bullet) {
+	showHidden: function(player, tile)
+	{
+		tile.alpha = .75;
+	},
+
+	fire: function(){
+		playerXP+=10;
+    		if (game.time.now > nextFire && this.pbullets.countDead() > 0){
+        		nextFire = game.time.now + fireRate;
+
+        		var pbullet = this.pbullets.getFirstDead();
+
+       			pbullet.reset(this.sprite.x - 8, this.sprite.y - 8);
+
+        		game.physics.arcade.moveToPointer(pbullet, 300);
+    		}
+	},
+
+	gameOver: function(){
+		this.sprite.destroy();
+		this.loseLabel.visible = true;
+		game.input.onTap.addOnce(function(){
+			game.state.start('levelSelect');
+		});
+	},
+
+	playerHit: function(player, bullet) {
 	  bullet.kill();
 		//sprite.kill();
+	},
+
+	enemyHit: function(enemy, bullet) {
+	  bullet.kill();
+		enemy.health-= 10;
+		if (enemy.health <= 0) {
+			enemy.alive = false;
+		}
 	},
 
 	bossHitPlayer: function (boss, sprite) {

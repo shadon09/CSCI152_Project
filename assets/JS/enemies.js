@@ -1,7 +1,8 @@
 function simpleMeleeEnemy(game, x, y, key, group, player){
 	var obj = game.add.sprite(x, y, key, 0, group);
+	obj.health = 100;
 	game.physics.arcade.enable(obj);
-  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#EE4141'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
+  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
 
@@ -41,7 +42,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 					}
 					// if the player isn't too far away in the y direction and there isn't a cliff to the left of the enemy
 					if (!((collideLeftDown.length == 0) &&  (yDistance < -200))) {
-				  	obj.body.velocity.x = -200;
+				  	obj.body.velocity.x = -250;
 						obj.scale.setTo(-1, 1);
 					}
 					// the enemy will stop to avoid falling off cliff
@@ -65,7 +66,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 
 					// if the player isn't too far away in the y direction and there isn't a cliff to the right of the enemy
 					if (!((collideRightDown.length == 0) &&  (yDistance < -200))) {
-				  	obj.body.velocity.x = 200;
+				  	obj.body.velocity.x = 250;
 						obj.scale.setTo(1, 1);
 					}
 					// the enemy will stop to avoid falling off cliff
@@ -89,18 +90,25 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 		}
 	};
 
-	obj.update = function(world, boxesCollisionHandler) {
-		try {
-			world.game.physics.arcade.collide(obj, world.groundLayer);
-			world.game.physics.arcade.collide(obj, world.boxes, boxesCollisionHandler);
-			obj.pursue(world.groundLayer);
-      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
-    	enemyHealthBar.setPercent(obj.health);
-      obj.visible = true;
-		} catch (e) {
-			return;
-		}
+	obj.update = function(layer, boxesCollisionHandler) {
+		if(obj.alive){
+			try {
+				game.physics.arcade.collide(obj, layer);
+				game.physics.arcade.collide(obj, game.boxes, boxesCollisionHandler);
 
+				obj.pursue(layer);
+
+	      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
+	    	enemyHealthBar.setPercent(obj.health);
+	      obj.visible = true;
+			} catch (e) {
+				return;
+			}
+		}
+		else {
+			enemyHealthBar.kill();
+			obj.destroy();
+		}
 	};
 
 	return obj;
@@ -117,19 +125,17 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 	bullets.setAll('outOfBoundsKill', true);
 
 	var obj = game.add.sprite(x, y, key, 0, group);
+	obj.health = 100;
 	game.physics.arcade.enable(obj);
-  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#EE4141'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
+  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
 
 	obj.body.bounce.y = 0.2;
-	obj.body.gravity.y = 200;
+	obj.body.gravity.y = 1000;
 	obj.body.gravity.x = 0;
 	obj.body.velocity.x = 0;
-
-	obj.getBullets = function() {
-		return bullets;
-	}
+	obj.anchor.setTo(.5, .5);
 
 	obj.fire = function() {
 		if(player.alive){
@@ -139,25 +145,30 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 			if (game.time.now > nextFire && xDistance < 500 && yDistance < 500)
 			{
 					nextFire = game.time.now + fireRate;
-					var bullet = game.add.sprite(obj.x, obj.y+10, 'bullet', 0, bullets);
+					var bullet = game.add.sprite(obj.x, obj.y, 'bullet', 0, bullets);
 					game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
 			}
 		}
 	};
 
-	obj.update = function(world, boxesCollisionHandler, playerCollisionHandler) {
-		try {
-			world.game.physics.arcade.collide(obj, world.groundLayer);
-	  	world.game.physics.arcade.collide(obj, world.boxes, boxesCollisionHandler);
-	    obj.fire();
-	    world.game.physics.arcade.overlap(world.sprite, obj.getBullets(), playerCollisionHandler);
-      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
-    	enemyHealthBar.setPercent(obj.health);
-      obj.visible = true;
-		} catch (e) {
-			return;
+	obj.update = function(layer, boxesCollisionHandler, playerCollisionHandler) {
+		if(obj.alive){
+			try {
+				game.physics.arcade.collide(obj, layer);
+		  	game.physics.arcade.collide(obj, game.boxes, boxesCollisionHandler);
+		    obj.fire();
+		    game.physics.arcade.overlap(player, bullets, playerCollisionHandler);
+	      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
+	    	enemyHealthBar.setPercent(obj.health);
+	      obj.visible = true;
+			} catch (e) {
+				return;
+			}
 		}
-
+		else {
+			enemyHealthBar.kill();
+			obj.destroy();
+		}
 	};
 
 	return obj;
@@ -169,8 +180,9 @@ function firstBoss(game, x, y, key, group, player){
 	var dropAttackNum = 0;
 	var chargeAttacks = 0;
 	var obj = game.add.sprite(x, y, key, 0, group);
+	obj.health = 100;
 	game.physics.arcade.enable(obj);
-  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#EE4141'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
+  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
 
@@ -212,17 +224,23 @@ function firstBoss(game, x, y, key, group, player){
 		}
 	};
 
-	obj.update = function(world, boxesCollisionHandler, playerCollisionHandler) {
-		try {
-			world.game.physics.arcade.collide(obj, world.groundLayer);
-			world.game.physics.arcade.collide(obj, world.boxes, boxesCollisionHandler);
-			world.game.physics.arcade.overlap(obj, player, playerCollisionHandler);
-			obj.fight();
-      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
-    	enemyHealthBar.setPercent(obj.health);
-      obj.visible = true;
-		} catch (e) {
-			return;
+	obj.update = function(layer, boxesCollisionHandler, playerCollisionHandler) {
+		if(obj.alive){
+			try {
+				game.physics.arcade.collide(obj, layer);
+				game.physics.arcade.collide(obj, game.boxes, boxesCollisionHandler);
+				game.physics.arcade.overlap(obj, player, playerCollisionHandler);
+				obj.fight();
+	      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
+	    	enemyHealthBar.setPercent(obj.health);
+	      obj.visible = true;
+			} catch (e) {
+				return;
+			}
+		}
+		else {
+			enemyHealthBar.kill();
+			obj.destroy();
 		}
 	};
 
