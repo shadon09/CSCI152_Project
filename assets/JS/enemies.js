@@ -2,6 +2,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 	var obj = game.add.sprite(x, y, key, 0, group);
 	obj.health = 100;
 	game.physics.arcade.enable(obj);
+	obj.body.collideWorldBounds = true;
   var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
@@ -14,7 +15,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 
 	obj.jump = function() {
 		if (obj.body.blocked.down) {
-			obj.body.velocity.y = -650;
+			obj.body.velocity.y = -700;
 		}
 	}
 
@@ -81,7 +82,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 			}
 
 			// if the player is above enemy and close enough in x and y directions then the enemy will jump
-			if ((player.y < (obj.y-15)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 200)){
+			if ((player.y < (obj.y-25)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 300)){
 				obj.jump();
 			}
 		}
@@ -127,6 +128,7 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 	var obj = game.add.sprite(x, y, key, 0, group);
 	obj.health = 100;
 	game.physics.arcade.enable(obj);
+	obj.body.collideWorldBounds = true;
   var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
@@ -145,7 +147,8 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 			if (game.time.now > nextFire && xDistance < 500 && yDistance < 500)
 			{
 					nextFire = game.time.now + fireRate;
-					var bullet = game.add.sprite(obj.x, obj.y, 'bullet', 0, bullets);
+					bullet = game.add.sprite(obj.x, obj.y, 'bullet', 0, bullets);
+					bullet.dmg = 10;
 					game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
 			}
 		}
@@ -182,6 +185,7 @@ function firstBoss(game, x, y, key, group, player){
 	var obj = game.add.sprite(x, y, key, 0, group);
 	obj.health = 100;
 	game.physics.arcade.enable(obj);
+	obj.body.collideWorldBounds = true;
   var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
