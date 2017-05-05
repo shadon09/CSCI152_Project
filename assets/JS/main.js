@@ -1,3 +1,472 @@
+//<<<<<<< HEAD
+var fireRate = 300;
+var nextFire = 0;
+var playerHealth = 100;
+var healthPack;
+var myHealthBar;
+var playerLives = 5;
+var playerXP = 0;
+var gameXPsteps = 15;
+var playerLevel = 0;
+
+function simpleMeleeEnemy(game, x, y, key, group, player){
+	var obj = game.add.sprite(x, y, key, 0, group);
+	game.physics.arcade.enable(obj);
+
+	obj.body.bounce.y = 0.2;
+	obj.body.gravity.y = 1000;
+	obj.body.gravity.x = 0;
+	obj.body.velocity.x = 0;
+
+	obj.jump = function() {
+		if (obj.body.blocked.down) {
+			obj.body.velocity.y = -650;
+		}
+	}
+
+	obj.pursue = function(layer) {
+		var collideLeft = layer.getTiles(obj.x-30, obj.y+60, 32, 48, true);
+		var collideRight = layer.getTiles(obj.x+30, obj.y+60, 32, 48, true);
+
+		var xDistance = player.x - obj.x;
+		var yDistance = player.y - obj.y;
+
+		if (xDistance < -25 && xDistance > -300) {
+			if (collideLeft.length == 0 && Math.abs(xDistance) > 70 && obj.body.blocked.down){
+			  obj.body.velocity.x = 0;
+			}
+			else {
+			  obj.body.velocity.x = -200;
+			}
+		}
+		if (xDistance > 25 && xDistance < 300) {
+			if (collideRight.length == 0 && Math.abs(xDistance) > 70 && obj.body.blocked.down){
+			  obj.body.velocity.x = 0;
+			}
+			else {
+			  obj.body.velocity.x = 200;
+			}
+		}
+		if (xDistance < 15 && xDistance > -15){
+			obj.body.velocity.x = 0;
+		}
+
+		if ((player.y < (obj.y-32)) && (Math.abs(xDistance) < 70)){
+			obj.jump();
+		}
+
+	};
+
+	return obj;
+}
+
+function simpleShootingEnemy(game, x, y, key, group, player){
+	var fireRate = 500;
+	var nextFire = 0;
+
+	var bullets = game.add.group();
+	bullets.enableBody = true;
+	bullets.physicsBodyType = Phaser.Physics.ARCADE;
+	bullets.setAll('checkWorldBounds', true);
+	bullets.setAll('outOfBoundsKill', true);
+
+	var obj = game.add.sprite(x, y, key, 0, group);
+	game.physics.arcade.enable(obj);
+
+	obj.body.bounce.y = 0.2;
+	obj.body.gravity.y = 1000;
+	obj.body.gravity.x = 0;
+	obj.body.velocity.x = 0;
+
+	obj.getBullets = function() {
+		return bullets;
+	}
+
+	obj.fire = function() {
+		var xDistance = Math.abs(player.x - obj.x);
+		var yDistance = Math.abs(player.y - obj.y);
+
+		if (game.time.now > nextFire && xDistance < 500 && yDistance < 500)
+		{
+				nextFire = game.time.now + fireRate;
+				var bullet = game.add.sprite(obj.x, obj.y+10, 'bullet', 0, bullets);
+				game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
+		}
+	};
+
+	return obj;
+}
+
+
+function firstBoss(game, x, y, key, group, player){
+	var attackRate = 1000;
+	var nextAttack = 0;
+	var dropAttackNum = 0;
+	var chargeAttacks = 0;
+	var obj = game.add.sprite(x, y, key, 0, group);
+	game.physics.arcade.enable(obj);
+
+	obj.body.bounce.y = 0.2;
+	obj.body.gravity.y = 1000;
+	obj.body.gravity.x = 0;
+	obj.body.velocity.x = 0;
+	obj.anchor.setTo(.5, .5);
+
+	obj.chargeAttack = function(){
+		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 1000);
+	}
+
+	obj.dropAttack = function (){
+		obj.x = player.x;
+		obj.y = player.y - 200;
+		obj.body.velocity.x = 0;
+		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 500);
+	}
+
+	obj.fight = function (){
+		var tripletAttackRate = 700;
+		var attackDistance = 700;
+		var xDistance = Math.abs(player.x - obj.x);
+		var yDistance = Math.abs(player.y - obj.y);
+
+		if(xDistance < attackDistance && yDistance < attackDistance) {
+			if (game.time.now > nextAttack && (dropAttackNum%4 == 0))
+			{
+					nextAttack = game.time.now + attackRate;
+					dropAttackNum++;
+					obj.chargeAttack();
+			}
+			else if (game.time.now > nextAttack && obj.body.blocked.down) {
+				nextAttack = game.time.now + tripletAttackRate;
+				obj.dropAttack();
+				dropAttackNum++;
+			}
+		}
+	};
+
+	obj.update = function(world, boxesCollisionHandler, playerCollisionHandler) {
+		try {
+			world.game.physics.arcade.collide(obj, world.groundLayer);
+			world.game.physics.arcade.collide(obj, world.boxes, boxesCollisionHandler);
+			world.game.physics.arcade.overlap(obj, playerCollisionHandler);
+			obj.fight();
+		} catch (e) {
+			return;
+		}
+	};
+
+	return obj;
+}
+
+
+//Put the entire state into a variable
+var mainState = {
+	preload: function(){
+  		this.game.load.image('player', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('robot', 'assets/robot.png', 80, 111);
+		
+		this.game.load.tilemap('tilemap', 'assets/level1.json', null, Phaser.Tilemap.TILED_JSON);
+		this.game.load.image('tiles', 'assets/images/sheet.png');
+		this.game.load.image('box', 'assets/images/tile_06.png');
+		this.game.load.spritesheet('simpleShootingEnemy', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('bullet', 'assets/images/ph_char.png', 10, 5);
+		this.game.load.image('pbullet', 'assets/bullet43.png');
+		this.game.load.image('healthP', 'assets/firstaid.png');
+		this.game.load.bitmapFont('myFont', 'assets/carrier_command.png', 'assets/carrier_command.xml');
+		this.game.load.spritesheet('firstBoss', 'assets/images/ph_char.png');
+	},
+
+
+	create: function(){
+		//Start the Arcade Physics systems
+		this.game.physics.startSystem(Phaser.Physics.ARCADE);
+
+		//Change the background colour
+		this.game.stage.backgroundColor = "#a9f0ff";
+
+		//Add the tilemap and tileset image. The first parameter in addTilesetImage
+		//is the name you gave the tilesheet when importing it into Tiled, the second
+		//is the key to the asset in Phaser
+		this.map = this.game.add.tilemap('tilemap');
+		this.map.addTilesetImage('factory', 'tiles');
+
+		//Add both the background and ground layers. We won't be doing anything with the
+		//GroundLayer though
+		this.backgroundlayer = this.map.createLayer('Background');
+		this.groundLayer = this.map.createLayer('Ground');
+
+		//Before you can use the collide function you need to set what tiles can collide
+		this.map.setCollisionBetween(1, 100, true, 'Ground');
+
+		//Add the sprite to the game and enable arcade physics on it
+		this.sprite = this.game.add.sprite(12500, this.game.world.centerY, 'robot');
+		this.sprite.scale.setTo(0.5,0.5);
+		this.sprite.anchor.setTo(.5, 1);
+		this.game.physics.arcade.enable(this.sprite);
+		this.sprite.animations.add('idle', [0, 1, 2, 3,4,5,6,7,8,9], 10, true);
+		this.sprite.animations.add('move', [10, 11, 12, 13,14,15,16,17], 10, true);
+		this.sprite.animations.add('jump', [18,19,20,21,22,23,24,25, 26], 10, true);
+
+
+		this.pbullets = game.add.group();
+		this.pbullets.enableBody = true;
+		this.pbullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+	    	this.pbullets.createMultiple(50, 'pbullet');
+		this.pbullets.setAll('checkWorldBounds', true);
+    		this.pbullets.setAll('outOfBoundsKill', true);
+
+		this.boxes = this.game.add.group();
+		this.boxes.enableBody = true;
+		this.boxes.setAll('immovable',true);
+		this.boxes.setAll('body.moves', false);
+
+
+		this.simpleMeleeEnemies = this.game.add.group();
+		this.simpleShootingEnemies = this.game.add.group();
+		simpleMeleeEnemy(this.game, 300, 300, 'simpleMeleeEnemy', this.simpleMeleeEnemies, this.sprite);
+		simpleShootingEnemy(this.game, 400, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
+		simpleShootingEnemy(this.game, 700, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
+		simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
+
+		this.firstBoss = this.game.add.group();
+		firstBoss(this.game, 12700, 68, 'firstBoss', this.firstBoss, this.sprite);
+		
+		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
+		this.loseLabel.anchor.setTo(0.5, 0.5);
+		this.loseLabel.visible = false;
+		
+		this.map.createFromObjects('Object Layer 1', 7, 'box', 0, true, false, this.boxes);
+		//Change the world size to match the size of this layer
+		this.groundLayer.resizeWorld();
+
+		//Set some physics on the sprite
+		this.sprite.body.bounce.y = 0.2;
+		this.sprite.body.gravity.y = 2000;
+		this.sprite.body.gravity.x = 20;
+		this.sprite.body.velocity.x = 0;
+
+		//Create a running animation for the sprite and play it
+		//this.sprite.animations.add('right', [5, 6, 7, 8], 10, true);
+		//this.sprite.animations.play('right');
+
+		//Make the camera follow the sprite
+		this.game.camera.follow(this.sprite);
+
+		//Enable cursor keys so we can create some controls
+		this.cursors = this.game.input.keyboard.createCursorKeys();
+
+		this.graphics = game.add.graphics(10, 10);
+		this.graphics.anchor.set(0.5);
+		this.graphics.beginFill(0x000000);
+		this.graphics.drawRect(0,0,350,150);
+		this.graphics.alpha = 7;
+		this.graphics.endFill();
+		this.graphics.fixedToCamera = true;
+		this.graphics.visible = false;	
+
+		this.hpText = game.add.bitmapText(this.graphics.position.x+10, this.graphics.position.y+25, 'myFont', 'HP:\n'+playerHealth+'/'+ this.sprite.maxHealth, 10);
+		this.hpText.fixedToCamera = true;
+		this.HbarConfig = {width: 250, height: 10, x: this.graphics.position.x+170, y: this.graphics.position.y+30, bg: {color: '#8ABA7E'}, bar:{color: '#27B902'}, animationDuration: 200, flipped: false, fixedToCamera: true,};
+		this.myHealthBar =  new HealthBar(this.game, this.HbarConfig);
+		this.myHealthBar.setPercent(playerHealth);
+
+	},
+
+	update: function() {
+		
+		if (game.input.activePointer.isDown){
+      			this.fire();
+  		}
+		//Make the sprite collide with the ground layer
+		for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++) {
+			this.game.physics.arcade.collide(this.simpleMeleeEnemies.children[i], this.groundLayer);
+	  		this.game.physics.arcade.collide(this.simpleMeleeEnemies.children[i], this.boxes, this.destroyBox);
+	    		this.simpleMeleeEnemies.children[i].pursue(this.groundLayer);
+	  	}
+
+	  	for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
+	    		this.game.physics.arcade.collide(this.simpleShootingEnemies.children[i], this.groundLayer);
+	  		this.game.physics.arcade.collide(this.simpleShootingEnemies.children[i], this.boxes, this.destroyBox);
+	    		this.simpleShootingEnemies.children[i].fire();
+	    		//this.game.physics.arcade.collide(this.sprite, this.simpleShootingEnemies.children[i].getBullets(), this.hitPlayer);
+	  	}
+
+		for (var i = 0; i < this.firstBoss.children.length; i++) {
+			this.firstBoss.children[i].update(this, this.destroyBox, this.bossHitPlayer);
+		}
+		this.game.physics.arcade.collide(this.sprite, this.groundLayer);
+		this.game.physics.arcade.collide(this.sprite, this.boxes, this.destroyBox);
+		//for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++){
+			this.game.physics.arcade.collide(this.pbullets, this.simpleMeleeEnemies, this.hitEnemy);
+		//}
+
+		//for (var i = 0; i < this.simpleShootingEnemies.children.length; i++){
+			this.game.physics.arcade.collide(this.pbullets, this.simpleShootingEnemies, this.hitEnemy);
+		//}
+		//Make the sprite jump when the up key is pushed
+    		if(this.cursors.up.isDown && this.sprite.body.blocked.down) {
+      			this.sprite.body.velocity.y = -1000;	
+			this.sprite.animations.play('jump');
+    		}
+	
+		if(this.cursors.right.isDown) {
+			this.sprite.body.velocity.x = 250;
+			this.sprite.scale.setTo(0.5, 0.5);
+			this.sprite.animations.play('move');
+		}
+		else if(this.cursors.left.isDown) {
+			this.sprite.body.velocity.x = -250;
+			this.sprite.scale.setTo(-0.5, 0.5);
+			this.sprite.animations.play('move');
+		}
+		else {
+			this.sprite.body.velocity.x = 0;
+			this.sprite.animations.play('idle');
+		}
+
+		if(this.sprite.y > 1000) {
+			this.sprite.kill();
+			game.state.start('title');
+		}
+	},
+
+	destroyBox: function(sprite, box) {
+		box.destroy();
+	},
+	
+
+
+	fire: function(){
+		playerXP+=10;
+    		if (game.time.now > nextFire && this.pbullets.countDead() > 0){
+        		nextFire = game.time.now + fireRate;
+
+        		var pbullet = this.pbullets.getFirstDead();
+
+       			pbullet.reset(this.sprite.x - 8, this.sprite.y - 8);
+
+        		game.physics.arcade.moveToPointer(pbullet, 300);
+    		}
+	},
+
+	gameOver: function(){
+		this.sprite.destroy();
+		this.loseLabel.visible = true;
+		game.input.onTap.addOnce(function(){
+			game.state.start('title');
+		});
+	},
+
+	hitPlayer: function(sprite, bullet) {
+	  	bullet.destroy();
+		sprite.kill();
+		//game.input.onTap.addOnce(function(){
+		//	game.state.start('title');
+		//})
+	},
+
+	hitEnemy: function(bullet, enemy){
+		bullet.destroy();
+		enemy.destroy();
+	},
+
+	bossHitPlayer: function (sprite, boss) {
+		sprite.body.velocity.x = boss.body.velocity.x;
+		sprite.body.velocity.y = -300;
+	}
+}
+
+
+
+var titleState = {
+	preload: function(){
+		//Set the background Color
+		game.stage.backgroundColor = '#000000';
+	},
+
+	create: function(){
+
+		game.camera.focusOnXY(game.world.centerX, game.world.centerY);
+		//Add text with value set to "Platformer"
+		this.labelTitle = game.add.text(game.world.centerX, game.world.centerY-125, "Platformer", {font: '50px Arial', fill: '#ffffff'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Add text with value set to "Play"
+		this.labelTitle = game.add.text(game.world.centerX, game.world.centerY-25, "Play", {font: '30px Arial', fill: '#ffffff'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Allow for the "Play" text to be clicked on
+		this.labelTitle.inputEnabled = true;
+		//If "Play" is clicked on, then start "mainState"
+		this.labelTitle.events.onInputDown.add(function(){
+			game.state.start('main');
+		}, this);
+		//If spacebar is pushed, start mainState
+		var spaceKey = game.input.keyboard.addKey(
+			Phaser.Keyboard.SPACEBAR);
+		spaceKey.onDown.add(function(){
+			game.state.start('main');
+		}, this);
+	},
+
+	update: function(){
+
+	},
+}
+
+
+var levMenuState = {
+	preload: function(){
+			this.game.load.spritesheet('button', 'assets/images/number-buttons-90x90.png', 90, 90);
+		//Set the background Color
+		game.stage.backgroundColor = '#ffffff';
+
+	},
+
+	create: function(){
+		game.camera.focusOnXY(game.world.centerX, game.world.centerY);
+		//Add text with value set to "Platformer"
+		this.labelTitle = game.add.text(game.world.centerX, game.world.centerY-200, "Level Select", {font: '50px Arial', fill: '#000000'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Add text with value set to "Play"
+		this.labelNext = game.add.text(game.world.centerX, game.world.centerY, "Next Level", {font: '30px Arial', fill: '#000000'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Allow for the "Play" text to be clicked on
+		this.labelTitle.inputEnabled = true;
+		 this.button = game.add.button(game.world.centerX - 195, game.world.centerY - 50, 'button', function() {game.state.start('main')}, this, 0, 0, 0);
+		 this.button.anchor.setTo(0.5, 0.5);
+		 this.button2 = game.add.button(game.world.centerX - 95, game.world.centerY - 50, 'button', function() {game.state.start('level2')}, this, 1, 1, 1);
+		 this.button2.anchor.setTo(0.5, 0.5);
+
+		//If "Play" is clicked on, then start "mainState"
+		this.labelTitle.events.onInputDown.add(function(){
+			game.state.start('main');
+		}, this);
+		//If spacebar is pushed, start mainState
+		var spaceKey = game.input.keyboard.addKey(
+			Phaser.Keyboard.SPACEBAR);
+		spaceKey.onDown.add(function(){
+			game.state.start('main');
+		}, this);
+	},
+
+	update: function(){
+
+	},
+}
+
+
+//Create a new game, set the value inside the game variable
+game = new Phaser.Game(800,600);
+//Add the mainState
+game.state.add('main', mainState);
+//Add the titleState
+game.state.add('title', titleState);
+
+game.state.add('levelSelect', levMenuState);
+//Start the game with the titleState
+game.state.start('title');
+/*=======
 
 var fireRate = 100;
 var nextFire = 0;
@@ -264,7 +733,7 @@ var mainState = {
 		//sprite.kill();
 		/*game.input.onTap.addOnce(function(){
 			game.state.start('title');
-		})*/
+		})
 	}
 }
 
@@ -490,3 +959,4 @@ game.state.add('levelSelect', levMenuState);
 
 //Start the game with the titleState
 game.state.start('title');
+>>>>>>> 832dfd7e11b6dff04eba504fa6d37dd950545609*/
