@@ -156,12 +156,11 @@ var mainState = {
 		box.destroy();
 	},
 
-	showHidden: function(player, tile)
-	{
+	showHidden: function(player, tile) {
 		tile.alpha = .75;
 	},
 
-	gameOver: function(){
+	gameOver: function() {
 		this.loseLabel.visible = true;
 		game.input.onTap.addOnce(function(){
 			game.state.start('levelSelect');
@@ -171,6 +170,9 @@ var mainState = {
 	takeBulletDamage: function(object, bullet) {
 	  bullet.kill();
 		object.damage(bullet.dmg);
+		if(!object.alive){
+			player.xp+=10;
+		}
 	},
 
 	takeDamage: function(object, damager) {
