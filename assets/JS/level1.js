@@ -91,7 +91,7 @@ var mainState = {
 
 	update: function() {
 		if(!player.alive){
-			this.loseLabel.visible = true;
+			this.gameOver();
 		}
 
 		if (game.input.activePointer.isDown){
@@ -103,17 +103,17 @@ var mainState = {
 
 		for (var i = 0; i < this.firstBoss.children.length; i++) {
 			this.firstBoss.children[i].update(this.groundLayer, this.destroyBox, this.bossHitPlayer);
-			this.game.physics.arcade.overlap(this.firstBoss.children[i], player.bullets, this.enemyHit);
+			this.game.physics.arcade.overlap(this.firstBoss.children[i], player.bullets, this.takeBulletDamage);
 		}
 
 		for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++) {
 	    this.simpleMeleeEnemies.children[i].update(this.groundLayer, this.destroyBox);
-			this.game.physics.arcade.overlap(this.simpleMeleeEnemies.children[i], player.bullets, this.enemyHit);
+			this.game.physics.arcade.overlap(this.simpleMeleeEnemies.children[i], player.bullets, this.takeBulletDamage);
 	  }
 
 	  for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
-	    this.simpleShootingEnemies.children[i].update(this.groundLayer, this.destroyBox, this.playerHit);
-			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i], player.bullets, this.enemyHit);
+	    this.simpleShootingEnemies.children[i].update(this.groundLayer, this.destroyBox, this.takeBulletDamage);
+			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i], player.bullets, this.takeBulletDamage);
 	  }
 		//Make the sprite collide with the ground layer
 		this.game.physics.arcade.collide(player, this.groundLayer);
@@ -162,32 +162,20 @@ var mainState = {
 	},
 
 	gameOver: function(){
-		player.destroy();
 		this.loseLabel.visible = true;
 		game.input.onTap.addOnce(function(){
 			game.state.start('levelSelect');
 		});
 	},
 
-	playerHit: function(player, bullet) {
+	takeBulletDamage: function(object, bullet) {
 	  bullet.kill();
-		player.damage(bullet.dmg);
-		//sprite.kill();
+		object.damage(bullet.dmg);
 	},
 
-	enemyHit: function(enemy, bullet) {
-	  bullet.kill();
-		enemy.health-= 10;
-		if (enemy.health <= 0) {
-			enemy.alive = false;
-		}
-	},
-
-	bossHitPlayer: function (boss, sprite) {
+	takeDamage: function(object, damager) {
 
 	}
-
-
 
 }
 
