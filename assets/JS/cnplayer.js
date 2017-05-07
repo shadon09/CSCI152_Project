@@ -24,15 +24,17 @@ function createPlayer(game, x, y, playerSpriteSheet, bulletIMG){
   obj.bullets.setAll('outOfBoundsKill', true);
 
 	obj.fire = function() {
-		if (game.time.now > obj.nextFire && obj.bullets.countDead() > 0){
-    		obj.nextFire = game.time.now + obj.fireRate;
+    if(obj.alive){
+  		if (game.time.now > obj.nextFire && obj.bullets.countDead() > 0){
+      		obj.nextFire = game.time.now + obj.fireRate;
 
-    		var pbullet = obj.bullets.getFirstDead();
+      		pbullet = obj.bullets.getFirstDead();
+          pbullet.dmg = 20;
+     			pbullet.reset(obj.x - 8, obj.y - 8);
 
-   			pbullet.reset(obj.x - 8, obj.y - 8);
-
-    		game.physics.arcade.moveToPointer(pbullet, 300);
-		}
+      		game.physics.arcade.moveToPointer(pbullet, 300);
+  		}
+    }
 	};
 
   return obj;
