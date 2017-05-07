@@ -1,5 +1,284 @@
-//<<<<<<< HEAD
-var fireRate = 300;
+
+//Put the entire state into a variable
+var mainState = {
+	preload: function(){
+		this.game.load.spritesheet('player', 'assets/robot.png',80,111);
+		this.game.load.tilemap('tilemap', 'assets/level1.json', null, Phaser.Tilemap.TILED_JSON);
+		this.game.load.image('tiles', 'assets/images/sheet.png');
+		this.game.load.image('box', 'assets/images/crate.png');
+		this.game.load.spritesheet('simpleShootingEnemy', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('firstBoss', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('bullet', 'assets/bullet43.png');
+		this.game.load.image('pbullet', 'assets/bullet43.png');
+		this.game.load.bitmapFont('myFont', 'assets/carrier_command.png', 'assets/carrier_command.xml');
+	},
+
+	create: function(){
+		//Start the Arcade Physics systems
+		this.game.physics.startSystem(Phaser.Physics.ARCADE);
+
+		//Change the background colour
+		this.game.stage.backgroundColor = "#170e7f";
+
+		//Add the tilemap and tileset image. The first parameter in addTilesetImage
+		//is the name you gave the tilesheet when importing it into Tiled, the second
+		//is the key to the asset in Phaser
+		this.map = this.game.add.tilemap('tilemap');
+		this.map.addTilesetImage('factory', 'tiles');
+
+		//Add both the background and ground layers. We won't be doing anything with the
+		//GroundLayer though
+		this.backgroundlayer = this.map.createLayer('Background');
+		this.groundLayer = this.map.createLayer('Ground');
+
+		//Before you can use the collide function you need to set what tiles can collide
+		this.map.setCollisionBetween(1, 100, true, 'Ground');
+
+		//Add the sprite to the game and enable arcade physics on it
+		player = createPlayer(this.game, 50, this.game.world.centerY, 'player', 'pbullet');
+		player.animations.add('idle', [0, 1, 2, 3,4,5,6,7,8,9], 10, true);
+		player.animations.add('move', [10, 11, 12, 13,14,15,16,17], 10, true);
+		player.animations.add('jump', [18,19,20,21,22,23,24,25, 26], 10, false);
+
+		graphics = game.add.graphics(10, 10);
+		graphics.anchor.set(.5);
+		graphics.fixedToCamera = true;
+		graphics.beginFill(0x000000);
+		graphics.drawRect(0, 0, 350, 150);
+		graphics.alpha = .7;
+		graphics.endFill();
+		graphics.visible = false;
+
+		hpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont', 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
+		hpText.fixedToCamera = true;
+		xpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
+		var HbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+30, bg: {color: '#8ABA7E'}, bar:{color: '#27B902'}, animationDuration: 200, flipped: false, isFixedToCamera: true,};
+		var XPbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+65, bg: {color: '#6DA1E3'}, bar:{color: '#2280F7'}, animationDuration: 200, flipped: false};
+
+		myHealthBar =  new HealthBar(game, HbarConfig);
+		myHealthBar.setPercent(player.health);
+		myXPbar = new HealthBar(game, XPbarConfig);
+		myXPbar.setPercent(player.xp);
+
+		this.hidden = this.map.createLayer('Hidden');
+
+		this.simpleMeleeEnemies = this.game.add.group();
+		this.simpleShootingEnemies = this.game.add.group();
+		this.firstBoss = this.game.add.group();
+
+		this.boxes = this.game.add.group();
+		this.boxes.enableBody = true;
+		this.boxes.setAll('immovable',true);
+		this.boxes.setAll('body.moves', false);
+
+		simpleMeleeEnemy(this.game, 300, 300, 'simpleMeleeEnemy', this.simpleMeleeEnemies, player);
+	  simpleShootingEnemy(this.game, 400, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+	  simpleShootingEnemy(this.game, 700, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+	  simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+		firstBoss(this.game, 13700, 68, 'firstBoss', this.firstBoss, player);
+
+		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
+		this.loseLabel.anchor.setTo(0.5, 0.5);
+		this.loseLabel.visible = false;
+		this.loseLabel.fixedToCamera = true;
+
+		this.map.createFromObjects('Object Layer 1', 7, 'box', 0, true, false, this.boxes);
+		//Change the world size to match the size of this layer
+		this.groundLayer.resizeWorld();
+
+		//Make the camera follow the sprite
+		this.game.camera.follow(player);
+
+		//Enable cursor keys so we can create some controls
+		this.cursors = this.game.input.keyboard.createCursorKeys();
+	},
+
+	update: function() {
+		if(!player.alive){
+			this.gameOver();
+		}
+
+		if (game.input.activePointer.isDown){
+      			player.fire();
+  	}
+		myHealthBar.setPercent(player.health);
+		hpText.text = 'HP:\n'+ player.health+'/'+ player.maxHealth;
+		myXPbar.setPercent(player.xp);
+
+		for (var i = 0; i < this.firstBoss.children.length; i++) {
+			this.firstBoss.children[i].update(this.groundLayer, this.destroyBox, this.bossHitPlayer);
+			this.game.physics.arcade.overlap(this.firstBoss.children[i], player.bullets, this.enemyHit);
+		}
+
+		for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++) {
+	    this.simpleMeleeEnemies.children[i].update(this.groundLayer, this.destroyBox);
+			this.game.physics.arcade.overlap(this.simpleMeleeEnemies.children[i], player.bullets, this.enemyHit);
+	  }
+
+	  for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
+	    this.simpleShootingEnemies.children[i].update(this.groundLayer, this.destroyBox, this.playerHit);
+			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i], player.bullets, this.enemyHit);
+	  }
+		//Make the sprite collide with the ground layer
+		this.game.physics.arcade.collide(player, this.groundLayer);
+		this.game.physics.arcade.collide(player, this.boxes, this.destroyBox);
+		//this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
+		this.game.physics.arcade.overlap(player, this.hidden, this.showHidden);
+
+		//Make the sprite jump when the up key is pushed
+		if(this.cursors.up.isDown && player.body.blocked.down) {
+  		player.body.velocity.y = -700;
+		}
+
+		if(this.cursors.right.isDown) {
+			player.body.velocity.x = 250;
+			player.animations.play('move');
+			player.scale.x = .6;
+		}
+		else if(this.cursors.left.isDown) {
+			player.body.velocity.x = -250;
+			player.animations.play('move');
+			player.scale.x = -.6;
+		}
+		else {
+			player.animations.play('idle');
+			player.body.velocity.x = 0;
+		}
+
+		if(!player.body.blocked.down){
+			player.animations.play('jump');
+		}
+
+		// Falls in pit
+		if(player.y > 1000) {
+			this.gameOver();
+		}
+	},
+
+	destroyBox: function(sprite, box) {
+		box.destroy();
+	},
+
+	showHidden: function(player, tile)
+	{
+		tile.alpha = .75;
+	},
+
+	gameOver: function(){
+		player.kill();
+		this.loseLabel.visible = true;
+		game.input.onTap.addOnce(function(){
+			game.state.start('levelSelect');
+		});
+	},
+
+	playerHit: function(player, bullet) {
+	  bullet.kill();
+		player.damage(bullet.dmg);
+		//sprite.kill();
+	},
+
+	enemyHit: function(enemy, bullet) {
+	  bullet.kill();
+		enemy.health-= 10;
+		if (enemy.health <= 0) {
+			enemy.alive = false;
+		}
+	},
+
+	bossHitPlayer: function (boss, sprite) {
+
+	}
+
+
+
+}
+
+var titleState = {
+	preload: function(){
+		//Set the background Color
+		game.stage.backgroundColor = '#000000';
+	},
+
+	create: function(){
+		//Add text with value set to "Platformer"
+		this.labelTitle = game.add.text(game.world.centerX, game.world.centerY-125, "Platformer", {font: '50px Arial', fill: '#ffffff'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Add text with value set to "Play"
+		this.labelTitle = game.add.text(game.world.centerX, game.world.centerY-25, "Play", {font: '30px Arial', fill: '#ffffff'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Allow for the "Play" text to be clicked on
+		this.labelTitle.inputEnabled = true;
+		//If "Play" is clicked on, then start "mainState"
+		this.labelTitle.events.onInputDown.add(function(){
+			game.state.start('levelSelect');
+		}, this);
+		//If spacebar is pushed, start mainState
+		var spaceKey = game.input.keyboard.addKey(
+			Phaser.Keyboard.SPACEBAR);
+		spaceKey.onDown.add(function(){
+			game.state.start('levelSelect');
+		}, this);
+	},
+
+	update: function(){
+
+	},
+}
+
+var levMenuState = {
+	preload: function(){
+			this.game.load.spritesheet('button', 'assets/images/number-buttons-90x90.png', 90, 90);
+		//Set the background Color
+		game.stage.backgroundColor = '#ffffff';
+
+	},
+
+	create: function(){
+		game.camera.focusOnXY(game.world.centerX, game.world.centerY);
+		//Add text with value set to "Platformer"
+		this.labelTitle = game.add.text(game.world.centerX, game.world.centerY-200, "Level Select", {font: '50px Arial', fill: '#000000'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Add text with value set to "Play"
+		this.labelNext = game.add.text(game.world.centerX, game.world.centerY, "Next Level", {font: '30px Arial', fill: '#000000'});
+		this.labelTitle.anchor.setTo(0.5, 0.5);
+		//Allow for the "Play" text to be clicked on
+		this.labelTitle.inputEnabled = true;
+		 this.button = game.add.button(game.world.centerX - 195, game.world.centerY - 50, 'button', function() {game.state.start('main')}, this, 0, 0, 0);
+		 this.button.anchor.setTo(0.5, 0.5);
+		 this.button2 = game.add.button(game.world.centerX - 95, game.world.centerY - 50, 'button', function() {game.state.start('level2')}, this, 1, 1, 1);
+		 this.button2.anchor.setTo(0.5, 0.5);
+
+		//If "Play" is clicked on, then start "mainState"
+		this.labelTitle.events.onInputDown.add(function(){
+			game.state.start('main');
+		}, this);
+		//If spacebar is pushed, start mainState
+		var spaceKey = game.input.keyboard.addKey(
+			Phaser.Keyboard.SPACEBAR);
+		spaceKey.onDown.add(function(){
+			game.state.start('main');
+		}, this);
+	},
+
+	update: function(){
+
+	},
+}
+
+
+//Create a new game, set the value inside the game variable
+game = new Phaser.Game(800,600);
+//Add the mainState
+game.state.add('main', mainState);
+//Add the titleState
+game.state.add('title', titleState);
+//Add the Level select state
+//game.state.add('level2', level2);
+game.state.add('levelSelect', levMenuState);
+game.state.start('title', titleState);
+/*var fireRate = 300;
 var nextFire = 0;
 var playerHealth = 100;
 var healthPack;
@@ -11,50 +290,116 @@ var playerLevel = 0;
 
 function simpleMeleeEnemy(game, x, y, key, group, player){
 	var obj = game.add.sprite(x, y, key, 0, group);
+	obj.health = 100;
 	game.physics.arcade.enable(obj);
+	obj.body.collideWorldBounds = true;
+  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
+  var enemyHealthBar = new HealthBar(game, EnemybarConfig);
+	enemyHealthBar.setPercent(obj.health);
 
 	obj.body.bounce.y = 0.2;
 	obj.body.gravity.y = 1000;
 	obj.body.gravity.x = 0;
 	obj.body.velocity.x = 0;
+	obj.anchor.setTo(.5, .5);
 
 	obj.jump = function() {
 		if (obj.body.blocked.down) {
-			obj.body.velocity.y = -650;
+			obj.body.velocity.y = -700;
 		}
 	}
 
 	obj.pursue = function(layer) {
-		var collideLeft = layer.getTiles(obj.x-30, obj.y+60, 32, 48, true);
-		var collideRight = layer.getTiles(obj.x+30, obj.y+60, 32, 48, true);
+		if(player.alive){
+			var collideLeftDown = layer.getTiles(obj.x-30, obj.y+60, 32, game.height, true);
+			var collideLeft = layer.getTiles(obj.x-30, obj.y-32, 32, 48, true);
+			var collideRightDown = layer.getTiles(obj.x+30, obj.y+60, 32, game.height, true);
+			var collideRight =layer.getTiles(obj.x+30, obj.y-32, 32, 48, true);
 
-		var xDistance = player.x - obj.x;
-		var yDistance = player.y - obj.y;
+			var xDistance = player.x - obj.x;
+			var yDistance = player.y - obj.y;
 
-		if (xDistance < -25 && xDistance > -300) {
-			if (collideLeft.length == 0 && Math.abs(xDistance) > 70 && obj.body.blocked.down){
-			  obj.body.velocity.x = 0;
+			// when player is to the left of enemy, and within a certain distance
+			if (xDistance < -25 && xDistance > -300) {
+
+				// if there is a cliff to the left and the player is too far away in the x direction then the enemy won't try and chase
+				if ((collideLeftDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
+				  obj.body.velocity.x = 0;
+				}
+				else {
+					// if the enemy is pursuing and there is an obstacle to the left it will attempt to jump over it
+					if (collideLeft.length != 0) {
+						obj.jump();
+					}
+					// if the player isn't too far away in the y direction and there isn't a cliff to the left of the enemy
+					if (!((collideLeftDown.length == 0) &&  (yDistance < -200))) {
+				  	obj.body.velocity.x = -250;
+						obj.scale.setTo(-1, 1);
+					}
+					// the enemy will stop to avoid falling off cliff
+					else {
+						obj.body.velocity.x = 0
+					}
+				}
 			}
-			else {
-			  obj.body.velocity.x = -200;
+			// when player is to the right of enemy, and within a certain distance
+			if (xDistance > 25 && xDistance < 300) {
+
+				// if there is a cliff to the right and the player is too far away in the x direction then the enemy won't try and chase
+				if ((collideRightDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
+				  obj.body.velocity.x = 0;
+				}
+				else {
+					// if the enemy is pursuing and there is an obstacle to the right it will attempt to jump over it
+					if (collideRight.length != 0) {
+						obj.jump();
+					}
+
+					// if the player isn't too far away in the y direction and there isn't a cliff to the right of the enemy
+					if (!((collideRightDown.length == 0) &&  (yDistance < -200))) {
+				  	obj.body.velocity.x = 250;
+						obj.scale.setTo(1, 1);
+					}
+					// the enemy will stop to avoid falling off cliff
+					else {
+						obj.body.velocity.x = 0
+					}
+				}
+			}
+			// when the enemy gets close enough to player it will stop moving, this would be a good spot to have them attack player
+			if ((xDistance < 15) && (xDistance > -15)){
+				obj.body.velocity.x = 0;
+			}
+
+			// if the player is above enemy and close enough in x and y directions then the enemy will jump
+			if ((player.y < (obj.y-25)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 300)){
+				obj.jump();
 			}
 		}
-		if (xDistance > 25 && xDistance < 300) {
-			if (collideRight.length == 0 && Math.abs(xDistance) > 70 && obj.body.blocked.down){
-			  obj.body.velocity.x = 0;
-			}
-			else {
-			  obj.body.velocity.x = 200;
-			}
-		}
-		if (xDistance < 15 && xDistance > -15){
+		else{
 			obj.body.velocity.x = 0;
 		}
+	};
 
-		if ((player.y < (obj.y-32)) && (Math.abs(xDistance) < 70)){
-			obj.jump();
+	obj.update = function(layer, boxesCollisionHandler) {
+		if(obj.alive){
+			try {
+				game.physics.arcade.collide(obj, layer);
+				game.physics.arcade.collide(obj, game.boxes, boxesCollisionHandler);
+
+				obj.pursue(layer);
+
+	      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
+	    	enemyHealthBar.setPercent(obj.health);
+	      obj.visible = true;
+			} catch (e) {
+				return;
+			}
 		}
-
+		else {
+			enemyHealthBar.kill();
+			obj.destroy();
+		}
 	};
 
 	return obj;
@@ -71,32 +416,56 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 	bullets.setAll('outOfBoundsKill', true);
 
 	var obj = game.add.sprite(x, y, key, 0, group);
+	obj.health = 100;
 	game.physics.arcade.enable(obj);
+	obj.body.collideWorldBounds = true;
+  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
+  var enemyHealthBar = new HealthBar(game, EnemybarConfig);
+	enemyHealthBar.setPercent(obj.health);
 
 	obj.body.bounce.y = 0.2;
 	obj.body.gravity.y = 1000;
 	obj.body.gravity.x = 0;
 	obj.body.velocity.x = 0;
-
-	obj.getBullets = function() {
-		return bullets;
-	}
+	obj.anchor.setTo(.5, .5);
 
 	obj.fire = function() {
-		var xDistance = Math.abs(player.x - obj.x);
-		var yDistance = Math.abs(player.y - obj.y);
+		if(player.alive){
+			var xDistance = Math.abs(player.x - obj.x);
+			var yDistance = Math.abs(player.y - obj.y);
 
-		if (game.time.now > nextFire && xDistance < 500 && yDistance < 500)
-		{
-				nextFire = game.time.now + fireRate;
-				var bullet = game.add.sprite(obj.x, obj.y+10, 'bullet', 0, bullets);
-				game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
+			if (game.time.now > nextFire && xDistance < 500 && yDistance < 500)
+			{
+					nextFire = game.time.now + fireRate;
+					bullet = game.add.sprite(obj.x, obj.y, 'bullet', 0, bullets);
+					bullet.dmg = 10;
+					game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
+			}
+		}
+	};
+
+	obj.update = function(layer, boxesCollisionHandler, playerCollisionHandler) {
+		if(obj.alive){
+			try {
+				game.physics.arcade.collide(obj, layer);
+		  	game.physics.arcade.collide(obj, game.boxes, boxesCollisionHandler);
+		    obj.fire();
+		    game.physics.arcade.overlap(player, bullets, playerCollisionHandler);
+	      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
+	    	enemyHealthBar.setPercent(obj.health);
+	      obj.visible = true;
+			} catch (e) {
+				return;
+			}
+		}
+		else {
+			enemyHealthBar.kill();
+			obj.destroy();
 		}
 	};
 
 	return obj;
 }
-
 
 function firstBoss(game, x, y, key, group, player){
 	var attackRate = 1000;
@@ -104,7 +473,12 @@ function firstBoss(game, x, y, key, group, player){
 	var dropAttackNum = 0;
 	var chargeAttacks = 0;
 	var obj = game.add.sprite(x, y, key, 0, group);
+	obj.health = 100;
 	game.physics.arcade.enable(obj);
+	obj.body.collideWorldBounds = true;
+  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
+  var enemyHealthBar = new HealthBar(game, EnemybarConfig);
+	enemyHealthBar.setPercent(obj.health);
 
 	obj.body.bounce.y = 0.2;
 	obj.body.gravity.y = 1000;
@@ -113,14 +487,14 @@ function firstBoss(game, x, y, key, group, player){
 	obj.anchor.setTo(.5, .5);
 
 	obj.chargeAttack = function(){
-		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 1000);
+		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 800);
 	}
 
 	obj.dropAttack = function (){
 		obj.x = player.x;
 		obj.y = player.y - 200;
 		obj.body.velocity.x = 0;
-		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 500);
+		game.physics.arcade.moveToXY(obj, player.x, player.y-15, 400);
 	}
 
 	obj.fight = function (){
@@ -144,20 +518,28 @@ function firstBoss(game, x, y, key, group, player){
 		}
 	};
 
-	obj.update = function(world, boxesCollisionHandler, playerCollisionHandler) {
-		try {
-			world.game.physics.arcade.collide(obj, world.groundLayer);
-			world.game.physics.arcade.collide(obj, world.boxes, boxesCollisionHandler);
-			world.game.physics.arcade.overlap(obj, playerCollisionHandler);
-			obj.fight();
-		} catch (e) {
-			return;
+	obj.update = function(layer, boxesCollisionHandler, playerCollisionHandler) {
+		if(obj.alive){
+			try {
+				game.physics.arcade.collide(obj, layer);
+				game.physics.arcade.collide(obj, game.boxes, boxesCollisionHandler);
+				game.physics.arcade.overlap(obj, player, playerCollisionHandler);
+				obj.fight();
+	      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
+	    	enemyHealthBar.setPercent(obj.health);
+	      obj.visible = true;
+			} catch (e) {
+				return;
+			}
+		}
+		else {
+			enemyHealthBar.kill();
+			obj.destroy();
 		}
 	};
 
 	return obj;
 }
-
 
 //Put the entire state into a variable
 var mainState = {
@@ -200,7 +582,7 @@ var mainState = {
 		this.map.setCollisionBetween(1, 100, true, 'Ground');
 
 		//Add the sprite to the game and enable arcade physics on it
-		this.sprite = this.game.add.sprite(12500, this.game.world.centerY, 'robot');
+		this.sprite = this.game.add.sprite(10, this.game.world.centerY, 'robot');
 		this.sprite.scale.setTo(0.5,0.5);
 		this.sprite.anchor.setTo(.5, 1);
 		this.game.physics.arcade.enable(this.sprite);
@@ -231,7 +613,7 @@ var mainState = {
 		simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, this.sprite);
 
 		this.firstBoss = this.game.add.group();
-		firstBoss(this.game, 12700, 68, 'firstBoss', this.firstBoss, this.sprite);
+		firstBoss(this.game, 13700, 68, 'firstBoss', this.firstBoss, this.sprite);
 		
 		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
 		this.loseLabel.anchor.setTo(0.5, 0.5);
@@ -276,9 +658,25 @@ var mainState = {
 
 	update: function() {
 		
+		this.myHealthBar.setPercent(playerHealth);
+		this.hpText.text = 'HP:\n'+ this.sprite.health+'/'+ this.sprite.maxHealth;
 		if (game.input.activePointer.isDown){
       			this.fire();
   		}
+		for (var i = 0; i < this.firstBoss.children.length; i++) {
+			this.firstBoss.children[i].update(this.groundLayer, this.destroyBox, this.bossHitPlayer);
+			this.game.physics.arcade.overlap(this.firstBoss.children[i], player.bullets, this.enemyHit);
+		}
+
+		for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++) {
+	    this.simpleMeleeEnemies.children[i].update(this.groundLayer, this.destroyBox);
+			this.game.physics.arcade.overlap(this.simpleMeleeEnemies.children[i], player.bullets, this.enemyHit);
+	  }
+
+	  for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
+	    this.simpleShootingEnemies.children[i].update(this.groundLayer, this.destroyBox, this.playerHit);
+			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i], player.bullets, this.enemyHit);
+	  }
 		//Make the sprite collide with the ground layer
 		for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++) {
 			this.game.physics.arcade.collide(this.simpleMeleeEnemies.children[i], this.groundLayer);
