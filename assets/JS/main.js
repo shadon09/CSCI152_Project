@@ -7,8 +7,8 @@ var mainState = {
 		this.game.load.image('tiles', 'assets/images/sheet.png');
 		this.game.load.image('box', 'assets/images/crate.png');
 		this.game.load.spritesheet('simpleShootingEnemy', 'assets/images/ph_char.png');
-		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/images/ph_char.png');
-		this.game.load.spritesheet('firstBoss', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/robot.png', 80, 111);
+		this.game.load.spritesheet('firstBoss', 'assets/robot.png', 80, 111);
 		this.game.load.spritesheet('bullet', 'assets/bullet43.png');
 		this.game.load.image('pbullet', 'assets/bullet43.png');
 		this.game.load.bitmapFont('myFont', 'assets/carrier_command.png', 'assets/carrier_command.xml');
@@ -52,14 +52,14 @@ var mainState = {
 
 		hpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont', 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
 		hpText.fixedToCamera = true;
-		xpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
+		//xpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
 		var HbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+30, bg: {color: '#8ABA7E'}, bar:{color: '#27B902'}, animationDuration: 200, flipped: false, isFixedToCamera: true,};
-		var XPbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+65, bg: {color: '#6DA1E3'}, bar:{color: '#2280F7'}, animationDuration: 200, flipped: false};
+		//var XPbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+65, bg: {color: '#6DA1E3'}, bar:{color: '#2280F7'}, animationDuration: 200, flipped: false};
 
 		myHealthBar =  new HealthBar(game, HbarConfig);
 		myHealthBar.setPercent(player.health);
-		myXPbar = new HealthBar(game, XPbarConfig);
-		myXPbar.setPercent(player.xp);
+		//myXPbar = new HealthBar(game, XPbarConfig);
+		//myXPbar.setPercent(player.xp);
 
 		this.hidden = this.map.createLayer('Hidden');
 
@@ -104,21 +104,21 @@ var mainState = {
   	}
 		myHealthBar.setPercent(player.health);
 		hpText.text = 'HP:\n'+ player.health+'/'+ player.maxHealth;
-		myXPbar.setPercent(player.xp);
+		//myXPbar.setPercent(player.xp);
 
 		for (var i = 0; i < this.firstBoss.children.length; i++) {
 			this.firstBoss.children[i].update(this.groundLayer, this.destroyBox, this.bossHitPlayer);
-			this.game.physics.arcade.overlap(this.firstBoss.children[i], player.bullets, this.enemyHit);
+			this.game.physics.arcade.overlap(this.firstBoss.children[i], player.bullets, this.takeBulletDamage);
 		}
 
 		for (var i = 0; i < this.simpleMeleeEnemies.children.length; i++) {
 	    this.simpleMeleeEnemies.children[i].update(this.groundLayer, this.destroyBox);
-			this.game.physics.arcade.overlap(this.simpleMeleeEnemies.children[i], player.bullets, this.enemyHit);
+			this.game.physics.arcade.overlap(this.simpleMeleeEnemies.children[i], player.bullets, this.takeBulletDamage);
 	  }
 
 	  for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
-	    this.simpleShootingEnemies.children[i].update(this.groundLayer, this.destroyBox, this.playerHit);
-			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i], player.bullets, this.enemyHit);
+	    this.simpleShootingEnemies.children[i].update(this.groundLayer, this.destroyBox, this.takeBulletDamage);
+			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i], player.bullets, this.takeBulletDamage);
 	  }
 		//Make the sprite collide with the ground layer
 		this.game.physics.arcade.collide(player, this.groundLayer);
@@ -173,25 +173,17 @@ var mainState = {
 		});
 	},
 
-	playerHit: function(player, bullet) {
+	takeBulletDamage: function(object, bullet) {
 	  bullet.kill();
-		player.damage(bullet.dmg);
-		//sprite.kill();
-	},
-
-	enemyHit: function(enemy, bullet) {
-	  bullet.kill();
-		enemy.health-= 10;
-		if (enemy.health <= 0) {
-			enemy.alive = false;
+		object.damage(bullet.dmg);
+		if(!object.alive){
+			player.xp+=10;
 		}
 	},
 
-	bossHitPlayer: function (boss, sprite) {
-
+	bossHitPlayer: function(boss, player) {
+		player.damage(1);
 	}
-
-
 
 }
 
@@ -546,7 +538,7 @@ var mainState = {
 	preload: function(){
   		this.game.load.image('player', 'assets/images/ph_char.png');
 		this.game.load.spritesheet('robot', 'assets/robot.png', 80, 111);
-		
+
 		this.game.load.tilemap('tilemap', 'assets/level1.json', null, Phaser.Tilemap.TILED_JSON);
 		this.game.load.image('tiles', 'assets/images/sheet.png');
 		this.game.load.image('box', 'assets/images/tile_06.png');
@@ -614,11 +606,11 @@ var mainState = {
 
 		this.firstBoss = this.game.add.group();
 		firstBoss(this.game, 13700, 68, 'firstBoss', this.firstBoss, this.sprite);
-		
+
 		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
 		this.loseLabel.anchor.setTo(0.5, 0.5);
 		this.loseLabel.visible = false;
-		
+
 		this.map.createFromObjects('Object Layer 1', 7, 'box', 0, true, false, this.boxes);
 		//Change the world size to match the size of this layer
 		this.groundLayer.resizeWorld();
@@ -646,7 +638,7 @@ var mainState = {
 		this.graphics.alpha = 7;
 		this.graphics.endFill();
 		this.graphics.fixedToCamera = true;
-		this.graphics.visible = false;	
+		this.graphics.visible = false;
 
 		this.hpText = game.add.bitmapText(this.graphics.position.x+10, this.graphics.position.y+25, 'myFont', 'HP:\n'+playerHealth+'/'+ this.sprite.maxHealth, 10);
 		this.hpText.fixedToCamera = true;
@@ -657,7 +649,7 @@ var mainState = {
 	},
 
 	update: function() {
-		
+
 		this.myHealthBar.setPercent(playerHealth);
 		this.hpText.text = 'HP:\n'+ this.sprite.health+'/'+ this.sprite.maxHealth;
 		if (game.input.activePointer.isDown){
@@ -705,10 +697,10 @@ var mainState = {
 		//}
 		//Make the sprite jump when the up key is pushed
     		if(this.cursors.up.isDown && this.sprite.body.blocked.down) {
-      			this.sprite.body.velocity.y = -1000;	
+      			this.sprite.body.velocity.y = -1000;
 			this.sprite.animations.play('jump');
     		}
-	
+
 		if(this.cursors.right.isDown) {
 			this.sprite.body.velocity.x = 250;
 			this.sprite.scale.setTo(0.5, 0.5);
@@ -733,7 +725,7 @@ var mainState = {
 	destroyBox: function(sprite, box) {
 		box.destroy();
 	},
-	
+
 
 
 	fire: function(){

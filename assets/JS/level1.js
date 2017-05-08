@@ -1,13 +1,13 @@
 //Put the entire state into a variable
 var mainState = {
 	preload: function(){
-		this.game.load.spritesheet('player', 'assets/robot.png',80,111);
+		this.game.load.spritesheet('player', 'assets/robot.png', 80, 111);
 		this.game.load.tilemap('tilemap', 'assets/level1.json', null, Phaser.Tilemap.TILED_JSON);
 		this.game.load.image('tiles', 'assets/images/sheet.png');
 		this.game.load.image('box', 'assets/images/crate.png');
 		this.game.load.spritesheet('simpleShootingEnemy', 'assets/images/ph_char.png');
-		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/images/ph_char.png');
-		this.game.load.spritesheet('firstBoss', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/robot.png', 80, 111);
+		this.game.load.spritesheet('firstBoss', 'assets/robot.png', 80, 111);
 		this.game.load.spritesheet('bullet', 'assets/bullet43.png');
 		this.game.load.image('pbullet', 'assets/bullet43.png');
 		this.game.load.bitmapFont('myFont', 'assets/carrier_command.png', 'assets/carrier_command.xml');
@@ -42,10 +42,12 @@ var mainState = {
 
 		graphics = game.add.graphics(10, 10);
 		graphics.anchor.set(.5);
+		graphics.fixedToCamera = true;
 		graphics.beginFill(0x000000);
 		graphics.drawRect(0, 0, 350, 150);
 		graphics.alpha = .7;
 		graphics.endFill();
+		graphics.visible = false;
 
 		hpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont', 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
 		xpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
@@ -77,6 +79,7 @@ var mainState = {
 		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
 		this.loseLabel.anchor.setTo(0.5, 0.5);
 		this.loseLabel.visible = false;
+		this.loseLabel.fixedToCamera = true;
 
 		this.map.createFromObjects('Object Layer 1', 7, 'box', 0, true, false, this.boxes);
 		//Change the world size to match the size of this layer
@@ -118,7 +121,7 @@ var mainState = {
 		//Make the sprite collide with the ground layer
 		this.game.physics.arcade.collide(player, this.groundLayer);
 		this.game.physics.arcade.collide(player, this.boxes, this.destroyBox);
-		this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
+		//this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
 		this.game.physics.arcade.overlap(player, this.hidden, this.showHidden);
 
 		//Make the sprite jump when the up key is pushed
@@ -147,8 +150,7 @@ var mainState = {
 
 		// Falls in pit
 		if(player.y > 1000) {
-			player.kill();
-			game.state.start('levelSelect');
+			this.gameOver();
 		}
 	},
 
@@ -175,8 +177,8 @@ var mainState = {
 		}
 	},
 
-	takeDamage: function(object, damager) {
-
+	bossHitPlayer: function(boss, player) {
+		player.damage(1);
 	}
 
 }

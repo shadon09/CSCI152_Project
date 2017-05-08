@@ -1,12 +1,18 @@
 function simpleMeleeEnemy(game, x, y, key, group, player){
+	var attackRate = 500;
+	var nextAttack = 0;
 	var obj = game.add.sprite(x, y, key, 0, group);
+	obj.animations.add('idle', [0, 1, 2, 3,4,5,6,7,8,9], 10, true);
+	obj.animations.add('move', [10, 11, 12, 13,14,15,16,17], 10, true);
+	obj.animations.add('jump', [18,19,20,21,22,23,24,25, 26], 10, false);
 	obj.health = 100;
 	game.physics.arcade.enable(obj);
-	obj.body.collideWorldBounds = true;
+	obj.scale.set(.6, .6);
+	//obj.body.collideWorldBounds = true;
   var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
-
+	obj.dmg = 10;
 	obj.body.bounce.y = 0.2;
 	obj.body.gravity.y = 1000;
 	obj.body.gravity.x = 0;
@@ -35,20 +41,24 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 				// if there is a cliff to the left and the player is too far away in the x direction then the enemy won't try and chase
 				if ((collideLeftDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
 				  obj.body.velocity.x = 0;
+					obj.animations.play('idle');
 				}
 				else {
 					// if the enemy is pursuing and there is an obstacle to the left it will attempt to jump over it
 					if (collideLeft.length != 0) {
 						obj.jump();
+						obj.animations.play('jump');
 					}
 					// if the player isn't too far away in the y direction and there isn't a cliff to the left of the enemy
 					if (!((collideLeftDown.length == 0) &&  (yDistance < -200))) {
 				  	obj.body.velocity.x = -250;
-						obj.scale.setTo(-1, 1);
+						obj.scale.setTo(-.6, .6);
+						obj.animations.play('move');
 					}
 					// the enemy will stop to avoid falling off cliff
 					else {
 						obj.body.velocity.x = 0
+						obj.animations.play('idle');
 					}
 				}
 			}
@@ -58,36 +68,50 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 				// if there is a cliff to the right and the player is too far away in the x direction then the enemy won't try and chase
 				if ((collideRightDown.length == 0) && (Math.abs(xDistance) > 70) && (obj.body.blocked.down)){
 				  obj.body.velocity.x = 0;
+					obj.animations.play('idle');
 				}
 				else {
 					// if the enemy is pursuing and there is an obstacle to the right it will attempt to jump over it
 					if (collideRight.length != 0) {
 						obj.jump();
+						obj.animations.play('jump');
 					}
 
 					// if the player isn't too far away in the y direction and there isn't a cliff to the right of the enemy
 					if (!((collideRightDown.length == 0) &&  (yDistance < -200))) {
 				  	obj.body.velocity.x = 250;
-						obj.scale.setTo(1, 1);
+						obj.scale.setTo(.6, .6);
+						obj.animations.play('move');
 					}
 					// the enemy will stop to avoid falling off cliff
 					else {
 						obj.body.velocity.x = 0
+						obj.animations.play('idle');
 					}
 				}
 			}
 			// when the enemy gets close enough to player it will stop moving, this would be a good spot to have them attack player
-			if ((xDistance < 15) && (xDistance > -15)){
-				obj.body.velocity.x = 0;
+			if ((xDistance < 35) && (xDistance > -35)){
+				if (game.time.now > nextAttack)
+				{
+						nextAttack = game.time.now + attackRate;
+						player.damage(obj.dmg);
+				}
+				if ((xDistance < 15) && (xDistance > -15)){
+					obj.body.velocity.x = 0;
+					obj.animations.play('idle');
+				}
 			}
 
 			// if the player is above enemy and close enough in x and y directions then the enemy will jump
 			if ((player.y < (obj.y-25)) && (Math.abs(xDistance) < 90) && (Math.abs(yDistance) < 300)){
 				obj.jump();
+				obj.animations.play('jump');
 			}
 		}
 		else{
 			obj.body.velocity.x = 0;
+			obj.animations.play('idle');
 		}
 	};
 
@@ -96,12 +120,11 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 			try {
 				game.physics.arcade.collide(obj, layer);
 				game.physics.arcade.collide(obj, game.boxes, boxesCollisionHandler);
-
 				obj.pursue(layer);
-
 	      enemyHealthBar.setPosition(obj.position.x, obj.position.y-25);
 	    	enemyHealthBar.setPercent(obj.health);
 	      obj.visible = true;
+
 			} catch (e) {
 				return;
 			}
@@ -128,7 +151,7 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 	var obj = game.add.sprite(x, y, key, 0, group);
 	obj.health = 100;
 	game.physics.arcade.enable(obj);
-	obj.body.collideWorldBounds = true;
+	//obj.body.collideWorldBounds = true;
   var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
@@ -178,18 +201,22 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 }
 
 function firstBoss(game, x, y, key, group, player){
-	var attackRate = 1000;
+	var attackRate = 500;
 	var nextAttack = 0;
 	var dropAttackNum = 0;
 	var chargeAttacks = 0;
 	var obj = game.add.sprite(x, y, key, 0, group);
+	obj.animations.add('idle', [0, 1, 2, 3,4,5,6,7,8,9], 10, true);
+	obj.animations.add('move', [10, 11, 12, 13,14,15,16,17], 10, true);
+	obj.animations.add('jump', [18,19,20,21,22,23,24,25, 26], 10, false);
 	obj.health = 100;
 	game.physics.arcade.enable(obj);
-	obj.body.collideWorldBounds = true;
+	obj.scale.set(.6, .6);
+	//obj.body.collideWorldBounds = true;
   var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
-
+	obj.dmg = 20;
 	obj.body.bounce.y = 0.2;
 	obj.body.gravity.y = 1000;
 	obj.body.gravity.x = 0;
@@ -212,17 +239,24 @@ function firstBoss(game, x, y, key, group, player){
 		var attackDistance = 700;
 		var xDistance = Math.abs(player.x - obj.x);
 		var yDistance = Math.abs(player.y - obj.y);
-
+		if(player.x < obj.x){
+			obj.scale.setTo(-.6,.6);
+		}
+		else {
+			obj.scale.setTo(.6,.6);
+		}
 		if(xDistance < attackDistance && yDistance < attackDistance) {
 			if (game.time.now > nextAttack && (dropAttackNum%4 == 0))
 			{
 					nextAttack = game.time.now + attackRate;
 					dropAttackNum++;
 					obj.chargeAttack();
+					obj.animations.play('move');
 			}
 			else if (game.time.now > nextAttack && obj.body.blocked.down) {
 				nextAttack = game.time.now + tripletAttackRate;
 				obj.dropAttack();
+				obj.animations.play('idle');
 				dropAttackNum++;
 			}
 		}
