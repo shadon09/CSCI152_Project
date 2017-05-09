@@ -52,14 +52,10 @@ var mainState = {
 
 		hpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont', 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
 		hpText.fixedToCamera = true;
-		xpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
 		var HbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+30, bg: {color: '#8ABA7E'}, bar:{color: '#27B902'}, animationDuration: 200, flipped: false, isFixedToCamera: true,};
-		var XPbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+65, bg: {color: '#6DA1E3'}, bar:{color: '#2280F7'}, animationDuration: 200, flipped: false};
 
 		myHealthBar =  new HealthBar(game, HbarConfig);
 		myHealthBar.setPercent(player.health);
-		myXPbar = new HealthBar(game, XPbarConfig);
-		myXPbar.setPercent(player.xp);
 
 		this.hidden = this.map.createLayer('Hidden');
 
@@ -73,9 +69,9 @@ var mainState = {
 		this.boxes.setAll('body.moves', false);
 
 		simpleMeleeEnemy(this.game, 300, 300, 'simpleMeleeEnemy', this.simpleMeleeEnemies, player);
-	  simpleShootingEnemy(this.game, 400, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
-	  simpleShootingEnemy(this.game, 700, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
-	  simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+		simpleShootingEnemy(this.game, 400, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+		simpleShootingEnemy(this.game, 700, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+		simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
 		firstBoss(this.game, 13700, 68, 'firstBoss', this.firstBoss, player);
 
 		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
@@ -104,7 +100,6 @@ var mainState = {
   	}
 		myHealthBar.setPercent(player.health);
 		hpText.text = 'HP:\n'+ player.health+'/'+ player.maxHealth;
-		myXPbar.setPercent(player.xp);
 
 		for (var i = 0; i < this.firstBoss.children.length; i++) {
 			this.firstBoss.children[i].update(this.groundLayer, this.destroyBox, this.bossHitPlayer);
