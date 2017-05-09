@@ -1,13 +1,15 @@
 
 //Put the entire state into a variable
+
+var playerXP = 10;
 var mainState = {
 	preload: function(){
-		this.game.load.spritesheet('player', 'assets/robot.png',80,111);
+		this.game.load.spritesheet('player', 'assets/test5.png',567,556);
 		this.game.load.tilemap('tilemap', 'assets/level1.json', null, Phaser.Tilemap.TILED_JSON);
 		this.game.load.image('tiles', 'assets/images/sheet.png');
 		this.game.load.image('box', 'assets/images/crate.png');
 		this.game.load.spritesheet('simpleShootingEnemy', 'assets/C18.png');
-		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/robot.png', 80, 111);
+		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/robot2.png', 80, 111);
 		this.game.load.spritesheet('firstBoss', 'assets/robot.png', 80, 111);
 		this.game.load.spritesheet('bullet', 'assets/bullet43.png');
 		this.game.load.image('pbullet', 'assets/bullet43.png');
@@ -38,25 +40,51 @@ var mainState = {
 		//Add the sprite to the game and enable arcade physics on it
 		player = createPlayer(this.game, 50, this.game.world.centerY, 'player', 'pbullet');
 		player.animations.add('idle', [0, 1, 2, 3,4,5,6,7,8,9], 10, true);
-		player.animations.add('move', [10, 11, 12, 13,14,15,16,17], 10, true);
-		player.animations.add('jump', [18,19,20,21,22,23,24,25, 26], 10, false);
+		player.animations.add('jump', [10,11,12,13,14,15,16,17], 10, false);
+		player.animations.add('move', [25, 26,27,28], 10, true);
+		player.animations.add('runshoot', [32, 33,34,35, 36,37,38], 10,true);
+		// player.animations.add('idle', [0, 1, 2, 3,4,5,6,7,8,9], 10, true);
+		// player.animations.add('move', [10, 11, 12, 13,14,15,16,17], 10, true);
+		// player.animations.add('jump', [18,19,20,21,22,23,24,25, 26], 10, false);
 
 		graphics = game.add.graphics(10, 10);
 		graphics.anchor.set(.5);
 		graphics.fixedToCamera = true;
 		graphics.beginFill(0x000000);
-		graphics.drawRect(0, 0, 350, 150);
+		graphics.drawRect(0, 0, 350, 100);
 		graphics.alpha = .7;
 		graphics.endFill();
-		graphics.visible = false;
+		graphics.visible = true;
 
-		hpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont', 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
-		hpText.fixedToCamera = true;
+		//hpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont')//, 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
+		//hpText.fixedToCamera = true;
+		
+		
+		
+		
+	
+	//livesText = game.add.bitmapText(graphics.position.x+10,graphics.position.y+85 , 'myFont', "lives: " + playerLives, 10);
+	//lvlText = game.add.bitmapText(graphics.position.x+150,graphics.position.y+85 , 'myFont', "Level: " + lvl, 10);
+	//lvlText.fixedToCamera =true;
+	//livesText.fixedToCamera=true;
+	//weaponInfoText =  game.add.bitmapText(graphics.position.x+10, graphics.position.y+110, 'myFont', "Ammo: " + (weapon.fireLimit -  weapon.shots) + '/'+ weapon.fireLimit, 10);
+	hpText = game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont', 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
+	xpText = game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
+	// hpText.fixedToCamera=true;
+	// xpText.fixedToCamera=true;
+	
+	
+		
+		//xpText = this.game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
 		var HbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+30, bg: {color: '#8ABA7E'}, bar:{color: '#27B902'}, animationDuration: 200, flipped: false, isFixedToCamera: true,};
+		var XPbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+65, bg: {color: '#6DA1E3'}, bar:{color: '#11346D'}, animationDuration: 200, flipped: false};
 
 		myHealthBar =  new HealthBar(game, HbarConfig);
 		myHealthBar.setPercent(player.health);
-
+		myXPbar = new HealthBar(game, XPbarConfig);
+		myXPbar.setPercent(playerXP);
+		myXPbar.setFixedToCamera(true);
+		
 		this.hidden = this.map.createLayer('Hidden');
 
 		this.simpleMeleeEnemies = this.game.add.group();
@@ -114,14 +142,21 @@ var mainState = {
 
 	update: function() {
 		if(!player.alive){
+		
 			this.gameOver();
 		}
 
-		if (game.input.activePointer.isDown){
-      			player.fire();
-  	}
+		
 		myHealthBar.setPercent(player.health);
+		myXPbar.setPercent(playerXP%100);
+		
+		
+		
 		hpText.text = 'HP:\n'+ player.health+'/'+ player.maxHealth;
+		hpText.x= graphics.position.x+10;
+		hpText.y= graphics.position.y+25;
+		xpText.x=graphics.position.x+10;
+		xpText.y=graphics.position.y+60
 
 		for (var i = 0; i < this.firstBoss.children.length; i++) {
 			this.firstBoss.children[i].update(this.groundLayer, this.destroyBox, this.bossHitPlayer);
@@ -143,20 +178,58 @@ var mainState = {
 		//this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
 		this.game.physics.arcade.overlap(player, this.hidden, this.showHidden);
 
-		//Make the sprite jump when the up key is pushed
-		if(this.wasd.up.isDown && player.body.blocked.down) {
-  		player.body.velocity.y = -700;
+		///////////////////////////////////////Make the sprite jump when the up key is pushed
+		if (player.scale.x< 0){
+		player.bullets.x  = -30;
+		player.bullets.y = 0;
 		}
-
-		if(this.wasd.right.isDown) {
+		if (player.scale.x >= 0){
+		player.bullets.x  = 30;
+		player.bullets.y = 0;
+		}
+	
+		
+		
+		
+		 if (game.input.activePointer.isDown && (!this.wasd.right.isDown) && (!this.wasd.left.isDown)){
+				player.frame = 45;
+      			player.fire();
+				player.body.velocity.x=0;
+						console.log(game.world.x);
+						console.log(game.world.y);
+						console.log("---------------");
+		}
+		else if (this.wasd.right.isDown&&game.input.activePointer.isDown){
+		player.scale.x = .15;
+        player.body.velocity.x = 250;
+        player.animations.play('runshoot');
+		player.fire();
+		
+		}
+		else if (this.wasd.left.isDown&&game.input.activePointer.isDown){
+		player.scale.x = -.15;
+        player.body.velocity.x = -250;
+        player.animations.play('runshoot');
+		player.fire();
+		
+		}
+		
+		else if(this.wasd.right.isDown) {
 			player.body.velocity.x = 250;
 			player.animations.play('move');
-			player.scale.x = .6;
+			player.scale.x = .15;
 		}
 		else if(this.wasd.left.isDown) {
 			player.body.velocity.x = -250;
 			player.animations.play('move');
-			player.scale.x = -.6;
+			player.scale.x = -.15;
+		}
+		else if(player.body.velocity.y< 0){
+				player.animations.play('jump');
+				
+		}
+		else if(player.body.velocity.y > 0){
+		player.frame = 18;
 		}
 		else {
 			player.animations.play('idle');
@@ -169,8 +242,8 @@ var mainState = {
 			player.y= this.game.world.centerY;
 		}
 
-		if(!player.body.blocked.down){
-			player.animations.play('jump');
+		if(this.wasd.up.isDown && player.body.blocked.down) {
+  		player.body.velocity.y = -700;
 		}
 
 		// Falls in pit
@@ -190,8 +263,11 @@ var mainState = {
 
 	gameOver: function(){
 		player.kill();
+		
 		this.loseLabel.visible = true;
+		
 		game.input.onTap.addOnce(function(){
+	
 			game.state.start('levelSelect');
 		});
 	},
@@ -200,7 +276,7 @@ var mainState = {
 	  bullet.kill();
 		object.damage(bullet.dmg);
 		if(!object.alive){
-			player.xp+=10;
+			playerXP+=10;
 		}
 	},
 
@@ -244,7 +320,7 @@ var titleState = {
 
 var levMenuState = {
 	preload: function(){
-			this.game.load.spritesheet('button', 'assets/images/number-buttons-90x90.png', 90, 90);
+		this.game.load.spritesheet('button', 'assets/images/number-buttons-90x90.png', 90, 90);
 		//Set the background Color
 		game.stage.backgroundColor = '#ffffff';
 
@@ -267,10 +343,12 @@ var levMenuState = {
 
 		//If "Play" is clicked on, then start "mainState"
 		this.labelTitle.events.onInputDown.add(function(){
+		
 			game.state.start('main');
 		}, this);
 		//If spacebar is pushed, start mainState
 		var spaceKey = game.input.keyboard.addKey(
+		
 			Phaser.Keyboard.SPACEBAR);
 		spaceKey.onDown.add(function(){
 			game.state.start('main');

@@ -1,7 +1,7 @@
 function createPlayer(game, x, y, playerSpriteSheet, bulletIMG){
 	var obj = game.add.sprite(x, y, playerSpriteSheet);
   game.physics.arcade.enable(obj);
-  obj.scale.set(.6, .6);
+  obj.scale.set(.15, .15);
   obj.xp = 0;
 	obj.health = 100;
   obj.maxHealth = 100;
@@ -9,7 +9,7 @@ function createPlayer(game, x, y, playerSpriteSheet, bulletIMG){
   obj.fireRate = 100;
   obj.nextFire = 0;
 
-	obj.body.bounce.y = 0.2;
+	obj.body.bounce.y = 0;
 	obj.body.gravity.y = 1000;
 	obj.body.gravity.x = 0;
 	obj.body.velocity.x = 0;
@@ -25,6 +25,7 @@ function createPlayer(game, x, y, playerSpriteSheet, bulletIMG){
 
 	obj.fire = function() {
     if(obj.alive){
+		game.camera.shake(.005, 100);
   		if (game.time.now > obj.nextFire && obj.bullets.countDead() > 0){
       		obj.nextFire = game.time.now + obj.fireRate;
 
@@ -32,7 +33,7 @@ function createPlayer(game, x, y, playerSpriteSheet, bulletIMG){
           pbullet.dmg = 20;
      			pbullet.reset(obj.x - 8, obj.y - 8);
 
-      		game.physics.arcade.moveToPointer(pbullet, 300);
+      		game.physics.arcade.moveToPointer(pbullet, 2500);
   		}
     }
 	};

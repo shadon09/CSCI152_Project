@@ -1,4 +1,10 @@
 
+
+
+
+
+
+
 var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 //http://localhost:8080
 
@@ -16,10 +22,9 @@ function preload() {
 	
     game.load.image('sky', 'assets/sky.png');
     game.load.image('ground', 'assets/platform.png');
- 	game.load.spritesheet('impact', 'assets/impact.png', 600, 553);
-	game.load.spritesheet('robot', 'assets/robot.png', 80, 111);
+	game.load.spritesheet('robot', 'assets/test5.png', 567, 556);
 	game.load.spritesheet('baddie', 'assets/baddie.png', 32, 32);
-	game.load.image('bullet', 'assets/bullet43.png');
+	game.load.image('bullet', 'assets/bullet23.png');
 	game.load.image('flame', 'assets/flame2.png');
 	game.load.image('healthP', 'assets/firstaid.png');
 	game.load.bitmapFont('myFont', 'assets/carrier_command.png', 'assets/carrier_command.xml');
@@ -35,38 +40,36 @@ function create() {
     game.add.sprite(0, 0, 'sky');
     platforms = game.add.group();
     platforms.enableBody = true;
+	
+	
 	reload =  game.input.keyboard.addKey(Phaser.Keyboard.R);
 	jumpButton = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
 	cursors = game.input.keyboard.createCursorKeys();
-	
+	shootButton = game.input.activePointer;
 
     var ground = platforms.create(0, game.world.height - 64, 'ground');
     ground.scale.setTo(2, 2);
     ground.body.immovable = true;
 	
 	
-    var ledge = platforms.create(400, 300, 'ground');
-    ledge.body.immovable = true;
-    ledge = platforms.create(-150, 250, 'ground');
-    ledge.body.immovable = true;
 ///////////////////////////////////////////////////////////////////////	
 
 
-	impactAnimation =  game.add.sprite(0,0, 'impact');
-	impactAnimation.anchor.set(0.5);
-	impactAnimation.scale.set(.05);
-	impactAnimation.visible = false;
 	
     player = game.add.sprite(32, game.world.height - 150, 'robot');
 	player.anchor.set(0.5);
     game.physics.arcade.enable(player);
     player.body.bounce.y = 0;
     player.body.collideWorldBounds = true;
+	player.frame = 1;
 	player.animations.add('idle', [0, 1, 2, 3,4,5,6,7,8,9], 10, true);
-	player.animations.add('move', [10, 11, 12, 13,14,15,16,17], 10, true);
-	player.animations.add('jump', [18,19,20,21,22,23,24,25, 26], 10, false);
-	
+	player.animations.add('jump', [10,11,12,13,14,15,16,17], 10, false);
+	player.animations.add('move', [25, 26,27,28], 10, true);
+	player.animations.add('runshoot', [32, 33,34,35, 36,37,38], 10,true);
+
+	player.scale.set(.2,.2);
 	player.body.gravity.y = 1400;
+	player.speed =100;
 	player.body.allowRotation= false;
 	player.setHealth(50);
 
@@ -101,19 +104,18 @@ function create() {
 	enemies= game.add.group();
 	enemies.add(enemy1);
 	enemies.add(enemy2);
-	//myTween = game.add.tween(enemy1).to({x:300 }, 2000, 'Linear', true,0,100,true);
 
 	graphics = game.add.graphics(10, 10);
 	graphics.anchor.set(.5);
 	graphics.beginFill(0x000000);
 	graphics.drawRect(0, 0, 350, 150);
 	graphics.alpha = .7;
+	graphics.fixedToCamera =true;
 	graphics.endFill();
 	
 	
 	
-	hpText = game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont', 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
-	xpText = game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
+	
 	var HbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+30, bg: {color: '#8ABA7E'}, bar:{color: '#27B902'}, animationDuration: 200, flipped: false};
 	var XPbarConfig = {width: 250, height: 10, x: graphics.position.x+170, y: graphics.position.y+65, bg: {color: '#6DA1E3'}, bar:{color: '#2280F7'}, animationDuration: 200, flipped: false};
 	var EnemybarConfig = {width: 30, height: 5, x: enemy1.position.x, y: enemy1.position.y+25, bg: {color: '#EE4141'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
@@ -133,43 +135,25 @@ function create() {
 	healthPack.body.bounce.y = .2;
 	healthPack.anchor.set(.5);
 	
-	/*ammoPack= game.add.sprite(325, 100,'ammo');
-	game.physics.arcade.enable(ammoPack);
-	ammoPack.body.gravity.y = 1400;
-	ammoPack.body.bounce.y = .2;
-	ammoPack.anchor.set(.5);
-	*/
 	
 	var myPoint = new Phaser.Point(-100,-100);
 	weapon = game.add.weapon(30, 'bullet');
 	weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-	weapon.bulletSpeed = 900;
+	weapon.bulletSpeed = 2500;
 	weapon.fireRate=200;
 	weapon.trackSprite(player, 0,0,false);
 	weapon.fireLimit = 30;
 	
 	
-	
-	
-	
-	weapon2 = game.add.weapon(30, 'flame');
-	weapon2.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-	weapon2.bulletSpeed = 900;
-	weapon2.fireRate = 30;
-	weapon2.trackSprite(player, 0,0,false);
-	weapon2.fireLimit = 200;
-	weapon2.bulletGravity = myPoint;
-	weapon2.bulletAngleVariance = 10;
-	
 	textGroup= game.add.group();
 	livesText = game.add.bitmapText(graphics.position.x+10,graphics.position.y+85 , 'myFont', "lives: " + playerLives, 10);
 	lvlText = game.add.bitmapText(graphics.position.x+150,graphics.position.y+85 , 'myFont', "Level: " + lvl, 10);
 	weaponInfoText =  game.add.bitmapText(graphics.position.x+10, graphics.position.y+110, 'myFont', "Ammo: " + (weapon.fireLimit -  weapon.shots) + '/'+ weapon.fireLimit, 10);
+	hpText = game.add.bitmapText(graphics.position.x+10, graphics.position.y+25, 'myFont', 'HP:\n'+player.health+'/'+ player.maxHealth, 10);
+	xpText = game.add.bitmapText(graphics.position.x+10, graphics.position.y+60, 'myFont', 'Xp:', 10);
 	textGroup.add(livesText);
 	
-	myCam = new Phaser.Camera(game, 0,100,100, 500,600);
-	myCam.SHAKE_BOTH= 10;
-	myCam.target = player;
+
 	
 
 	
@@ -187,7 +171,7 @@ function update() {
 	game.physics.arcade.overlap(weapon.bullets, enemies, bulletEnemyCollision);
 	game.physics.arcade.collide(healthPack, platforms);
 	game.physics.arcade.overlap(player, healthPack, healthPackCollision, null, this);
-	//impactAnimation.visible =false;
+
 	if(game.physics.arcade.overlap(player, enemies)== true)
 	{
 		player.visible =  false;
@@ -200,13 +184,7 @@ function update() {
 		}
 	}
 	
-		console.log(game.physics.arcade.collide(weapon.bullets, enemies));
 
-	
-	
-
-	
-	//console.log(game.physics.arcade.collide(enemies, platforms));
 	player.visible =true;
 	
 	weaponInfoText.text = "Ammo: " + (weapon.fireLimit -  weapon.shots) + '/'+ weapon.fireLimit;
@@ -223,57 +201,87 @@ function update() {
 	enemy1HealthBar.setPercent(enemy1.health);
 	enemy1.visible =  true;
 	
-	//myTween.to({x:300 }, 1000, Phaser.Easing.Linear.None, true);
-	//myTween.to({x:500 }, 1000, Phaser.Easing.Linear.None, true);
-	//game.add.tween(enemy1).to({x:500 }, 1000, Phaser.Easing.Linear.None, true);
+	
+	if (player.scale.x< 0){
+		weapon.bullets.x  = -45;
+		weapon.bullets.y = -3;
+	}
+	if (player.scale.x >= 0){
+		weapon.bullets.x  = 45;
+		weapon.bullets.y = -3;
+	}
+	
+	
 	
 
-	if (game.input.activePointer.isDown)
+	if (shootButton.isDown&& (!cursors.right.isDown) && (!cursors.left.isDown))
     {
-		//impactAnimation.visible = true;
+		player.frame =45;
+	
 		weapon.fireAngle= game.input.activePointer.position.angle(player,game.input.activePointer);
 		weapon.fireAngle+=180;
         weapon.fire();
-		console.log(weapon.shots);
     }
-    if (cursors.left.isDown)
+	
+	else if (cursors.right.isDown&&shootButton.isDown){
+		player.scale.x = .2;
+        player.body.velocity.x = 150;
+        player.animations.play('runshoot');
+		weapon.fireAngle= game.input.activePointer.position.angle(player,game.input.activePointer);
+		weapon.fireAngle+=180;
+        weapon.fire();
+		
+	}
+	else if (cursors.left.isDown&&shootButton.isDown){
+		player.scale.x = -.2;
+        player.body.velocity.x = -150;
+        player.animations.play('runshoot');
+		weapon.fireAngle= game.input.activePointer.position.angle(player,game.input.activePointer);
+		weapon.fireAngle+=180;
+        weapon.fire();
+		
+	}
+	else if (cursors.left.isDown)
     {
         //  Move to the left
         player.body.velocity.x = -150;
         player.animations.play('move');
-		player.scale.x = -1;
+		player.scale.x = -.2;
+		
     }
     else if (cursors.right.isDown)
     {
         //  Move to the right
-		myCam.fade('0x000000', 10);
+		player.scale.x = .2;
         player.body.velocity.x = 150;
         player.animations.play('move');
-		player.scale.x = 1;
+
     }
+	
+	else if(reload.isDown){
+		weapon.resetShots(30);
+	}
+	else if(player.body.velocity.y< 0){
+				player.animations.play('jump');
+				
+	}
+	else if(player.body.velocity.y > 0){
+		player.frame = 18;
+	}
     else
     {
-        //  Stand still
+       // Stand still
         player.animations.play('idle');
-        //player.frame = 4;
 		player.body.velocity.x = 0;
     }
     
-    //  Allow the player to jump if they are touching the ground.
-    if (jumpButton.isDown && player.body.touching.down)
+ 
+	if(jumpButton.isDown && player.body.touching.down)
     {
+	
         player.body.velocity.y = -700;
+		
     }
-	if(reload.isDown){
-		
-		weapon.resetShots(30);
-		
-	}
-	if(!player.body.touching.down){
-		player.animations.play('jump');
-	}
-		impactAnimation.visible=false;
-
 	
 	
 }
@@ -295,7 +303,7 @@ function bulletEnemyCollision(bullet, enemy)
 	
 	enemy.damage(10);
 	bullet.kill();
-	impactAnimation.visible = true;
+
 	
 	if(enemy.health==0){
 		enemy1HealthBar.kill();
