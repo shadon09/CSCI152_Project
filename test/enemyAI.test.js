@@ -125,3 +125,45 @@ describe('Shooting enemy', function () {
     done();
   });
 });
+
+describe('Boss enemy', function () {
+  it('attacks player in a pattern', function (done) {
+    var player = {
+        alive: true,
+        x: -699,
+        y: -699
+      };
+
+    var obj = {
+      attacks: {drop: 0, charge: 0},
+      attackDistance: 700,
+      x: 0,
+      y: 0,
+      fight: function(player) {
+        while(obj.attacks.drop < 3){
+          if(player.alive){
+            var xDistance = Math.abs(player.x - obj.x);
+        		var yDistance = Math.abs(player.y - obj.y);
+
+        		if(xDistance < obj.attackDistance && yDistance < obj.attackDistance) {
+        			if (obj.attacks.drop%4 == 0)
+        			{
+        					obj.attacks.drop++;
+        					obj.attacks.charge++
+        			}
+        			else {
+        				obj.attacks.drop++;
+        			}
+        		}
+      	  }
+        }
+        return obj.attacks;
+      }
+    };
+
+    var pattern = obj.fight(player);
+
+    expect((pattern.drop)/(pattern.charge)).to.be.equal(3);
+    done();
+  });
+});
