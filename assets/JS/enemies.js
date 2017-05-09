@@ -219,8 +219,8 @@ function firstBoss(game, x, y, key, group, player){
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
 	obj.dmg = 20;
-	obj.body.bounce.y = 0.2;
-	obj.body.gravity.y = 1000;
+	obj.body.bounce.y = 0;
+	obj.body.gravity.y = 700;
 	obj.body.gravity.x = 0;
 	obj.body.velocity.x = 0;
 	obj.anchor.setTo(.5, .5);

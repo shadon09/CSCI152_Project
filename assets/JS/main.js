@@ -110,7 +110,9 @@ var mainState = {
   		up: game.input.keyboard.addKey(Phaser.Keyboard.W),
   		left: game.input.keyboard.addKey(Phaser.Keyboard.A),
   		right: game.input.keyboard.addKey(Phaser.Keyboard.D),
+			boss: game.input.keyboard.addKey(Phaser.Keyboard.B)
 		};
+
 	},
 
 	update: function() {
@@ -166,6 +168,12 @@ var mainState = {
 		else {
 			player.animations.play('idle');
 			player.body.velocity.x = 0;
+		}
+
+
+		if(this.wasd.boss.isDown) {
+			player.x= 13000;
+			player.y= this.game.world.centerY;
 		}
 
 		if(!player.body.blocked.down){
