@@ -119,9 +119,9 @@ var mainState = {
 
 		if (game.input.activePointer.isDown){
       			player.fire();
-						console.log(game.world.x);
-						console.log(game.world.y);
-						console.log("---------------");
+			//			console.log(game.world.x);
+			//			console.log(game.world.y);
+			//			console.log("---------------");
   	}
 		myHealthBar.setPercent(player.health);
 		hpText.text = 'HP:\n'+ player.health+'/'+ player.maxHealth;
@@ -139,10 +139,12 @@ var mainState = {
 	  for (var i = 0; i < this.simpleShootingEnemies.children.length; i++) {
 	    this.simpleShootingEnemies.children[i].update(this.groundLayer, this.destroyBox, this.takeBulletDamage);
 			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i], player.bullets, this.takeBulletDamage);
+			this.game.physics.arcade.overlap(this.simpleShootingEnemies.children[i].bullets, this.groundLayer, this.bulletPlatformCollision);
 	  }
 		//Make the sprite collide with the ground layer
 		this.game.physics.arcade.collide(player, this.groundLayer);
 		this.game.physics.arcade.collide(player, this.boxes, this.destroyBox);
+		this.game.physics.arcade.collide(player.bullets, this.groundLayer, this.bulletPlatformCollision);
 		//this.map.forEach(function(tile) {tile.collideDown = false}, this, 0, 0, this.map.width, this.map.height, this.groundLayer);
 		this.game.physics.arcade.overlap(player, this.hidden, this.showHidden);
 
@@ -209,6 +211,10 @@ var mainState = {
 
 	bossHitPlayer: function(boss, player) {
 		player.damage(1);
+	},
+
+	bulletPlatformCollision: function(bullet, platforms) {
+		bullet.kill();
 	}
 
 }
