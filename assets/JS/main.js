@@ -6,7 +6,7 @@ var mainState = {
 		this.game.load.tilemap('tilemap', 'assets/level1.json', null, Phaser.Tilemap.TILED_JSON);
 		this.game.load.image('tiles', 'assets/images/sheet.png');
 		this.game.load.image('box', 'assets/images/crate.png');
-		this.game.load.spritesheet('simpleShootingEnemy', 'assets/images/ph_char.png');
+		this.game.load.spritesheet('simpleShootingEnemy', 'assets/C18.png');
 		this.game.load.spritesheet('simpleMeleeEnemy', 'assets/robot.png', 80, 111);
 		this.game.load.spritesheet('firstBoss', 'assets/robot.png', 80, 111);
 		this.game.load.spritesheet('bullet', 'assets/bullet43.png');
@@ -73,9 +73,22 @@ var mainState = {
 		this.boxes.setAll('body.moves', false);
 
 		simpleMeleeEnemy(this.game, 300, 300, 'simpleMeleeEnemy', this.simpleMeleeEnemies, player);
+		simpleMeleeEnemy(this.game, 500, 300, 'simpleMeleeEnemy', this.simpleMeleeEnemies, player);
+		simpleMeleeEnemy(this.game, 1400, 60, 'simpleMeleeEnemy', this.simpleMeleeEnemies, player);
+		simpleMeleeEnemy(this.game, 1500, 60, 'simpleMeleeEnemy', this.simpleMeleeEnemies, player);
+		simpleMeleeEnemy(this.game, 1800, 300, 'simpleMeleeEnemy', this.simpleMeleeEnemies, player);
+		simpleMeleeEnemy(this.game, 2700, 60, 'simpleMeleeEnemy', this.simpleMeleeEnemies, player);
+
+
+
 	  simpleShootingEnemy(this.game, 400, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
 	  simpleShootingEnemy(this.game, 700, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
 	  simpleShootingEnemy(this.game, 710, 68, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+		simpleShootingEnemy(this.game, 1200, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+		simpleShootingEnemy(this.game, 1500, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+		simpleShootingEnemy(this.game, 2800, 300, 'simpleShootingEnemy', this.simpleShootingEnemies, player);
+
+
 		firstBoss(this.game, 13700, 68, 'firstBoss', this.firstBoss, player);
 
 		this.loseLabel = game.add.text(game.world.centerX, game.world.centerY, "Game Over", {font: '30px Arial', fill: '#ffffff'});
@@ -92,6 +105,12 @@ var mainState = {
 
 		//Enable cursor keys so we can create some controls
 		this.cursors = this.game.input.keyboard.createCursorKeys();
+
+		this.wasd = {
+  		up: game.input.keyboard.addKey(Phaser.Keyboard.W),
+  		left: game.input.keyboard.addKey(Phaser.Keyboard.A),
+  		right: game.input.keyboard.addKey(Phaser.Keyboard.D),
+		};
 	},
 
 	update: function() {
@@ -101,6 +120,9 @@ var mainState = {
 
 		if (game.input.activePointer.isDown){
       			player.fire();
+						console.log(game.world.x);
+						console.log(game.world.y);
+						console.log("---------------");
   	}
 		myHealthBar.setPercent(player.health);
 		hpText.text = 'HP:\n'+ player.health+'/'+ player.maxHealth;
@@ -127,16 +149,16 @@ var mainState = {
 		this.game.physics.arcade.overlap(player, this.hidden, this.showHidden);
 
 		//Make the sprite jump when the up key is pushed
-		if(this.cursors.up.isDown && player.body.blocked.down) {
+		if(this.wasd.up.isDown && player.body.blocked.down) {
   		player.body.velocity.y = -700;
 		}
 
-		if(this.cursors.right.isDown) {
+		if(this.wasd.right.isDown) {
 			player.body.velocity.x = 250;
 			player.animations.play('move');
 			player.scale.x = .6;
 		}
-		else if(this.cursors.left.isDown) {
+		else if(this.wasd.left.isDown) {
 			player.body.velocity.x = -250;
 			player.animations.play('move');
 			player.scale.x = -.6;

@@ -91,7 +91,7 @@ function simpleMeleeEnemy(game, x, y, key, group, player){
 				}
 			}
 			// when the enemy gets close enough to player it will stop moving, this would be a good spot to have them attack player
-			if ((xDistance < 35) && (xDistance > -35)){
+			if (Math.abs(xDistance)<35 && Math.abs(yDistance) < 70){
 				if (game.time.now > nextAttack)
 				{
 						nextAttack = game.time.now + attackRate;
@@ -150,9 +150,11 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 
 	var obj = game.add.sprite(x, y, key, 0, group);
 	obj.health = 100;
+	obj.scale.set(.6);
+	obj.angle+=180;
 	game.physics.arcade.enable(obj);
 	//obj.body.collideWorldBounds = true;
-  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+25, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
+  var EnemybarConfig = {width: 30, height: 5, x: obj.position.x, y: obj.position.y+50, bg: {color: '#000000'}, bar:{color: '#FF0000'}, animationDuration: 200, flipped: false};
   var enemyHealthBar = new HealthBar(game, EnemybarConfig);
 	enemyHealthBar.setPercent(obj.health);
 
@@ -170,7 +172,7 @@ function simpleShootingEnemy(game, x, y, key, group, player){
 			if (game.time.now > nextFire && xDistance < 500 && yDistance < 500)
 			{
 					nextFire = game.time.now + fireRate;
-					bullet = game.add.sprite(obj.x, obj.y, 'bullet', 0, bullets);
+					bullet = game.add.sprite(obj.x, obj.y-25, 'bullet', 0, bullets);
 					bullet.dmg = 10;
 					game.physics.arcade.moveToXY(bullet, player.x, player.y-15, 300);
 			}
