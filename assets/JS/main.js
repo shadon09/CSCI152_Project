@@ -119,9 +119,6 @@ var mainState = {
 
 		if (game.input.activePointer.isDown){
       			player.fire();
-						console.log(game.world.x);
-						console.log(game.world.y);
-						console.log("---------------");
   	}
 		myHealthBar.setPercent(player.health);
 		hpText.text = 'HP:\n'+ player.health+'/'+ player.maxHealth;
