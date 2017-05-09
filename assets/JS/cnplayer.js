@@ -5,7 +5,7 @@ function createPlayer(game, x, y, playerSpriteSheet, bulletIMG){
   obj.xp = 0;
 	obj.health = 100;
   obj.maxHealth = 100;
-	obj.body.collideWorldBounds = true;
+	//obj.body.collideWorldBounds = true;
   obj.fireRate = 100;
   obj.nextFire = 0;
 

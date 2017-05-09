@@ -1,13 +1,22 @@
 <html>
 	<head>
 		<title>Platformer Game</title>
+		<script src="../node_modules/mocha/mocha.js"></script>
+		<script src="../node_modules/chai/chai.js"></script>
+		<script>
+    			mocha.ui('bdd');
+    			mocha.reporter('spec');
+    			expect = chai.expect;
+    			assert = chai.assert;
+		</script>
+		<script src="../test/game.test.js"></script>
 		<script type="text/javascript" src="assets/JS/phaser.js"></script>
 		<script type="text/javascript" src="assets/JS/main.js"></script>
 		<script type="text/javascript" src="assets/JS/HealthBar.js"></script>
-		<script type="text/javascript" src="assets/JS/cnplayer2.js"></script>
-		<script type="text/javascript" src="assets/JS/enemies2.js"></script>
+		<script type="text/javascript" src="assets/JS/cnplayer.js"></script>
+		<script type="text/javascript" src="assets/JS/enemies.js"></script>
 	</head>
 	<body>
-		
+		<div id="mocha"></div>
 	</body>
 </html>
