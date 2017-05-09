@@ -3,8 +3,8 @@ function createPlayer(game, x, y, playerSpriteSheet, bulletIMG){
   game.physics.arcade.enable(obj);
   obj.scale.set(.6, .6);
   obj.xp = 0;
-	obj.health = 100;
-  obj.maxHealth = 100;
+	obj.health = 1000;
+  obj.maxHealth = 1000;
 	//obj.body.collideWorldBounds = true;
   obj.fireRate = 100;
   obj.nextFire = 0;
